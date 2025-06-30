@@ -2,9 +2,18 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
 
+class Student(models.Model):
+    email = models.EmailField(max_length=254, unique=True)
+    password = models.CharField(max_length=128)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    username = models.CharField(max_length=150, unique=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    school = models.CharField(max_length=100, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
 
-
-# Create your models here.
+    def __str__(self):
+        return self.username
 class Grade(models.Model):
     name = models.CharField(max_length=55)
     
@@ -25,15 +34,16 @@ class Topic(models.Model):
             return self.name
 class Assessment(models.Model):
             course = models.ForeignKey(Course, on_delete=models.CASCADE)
-            answer = models.TextField()
-            topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
             question = models.TextField()
+            topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+            answer = models.TextField()
             def __str__(self):
                 return self.name
 class Student_Profile(models.Model):
       user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
       grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
       course = models.ForeignKey(Course, on_delete=models.CASCADE)
+      School = models.ForeignKey('School', on_delete=models.CASCADE, blank=True, null=True)
       def __str__(self):
           return self.user.username
 class Materials(models.Model):
@@ -92,4 +102,22 @@ class Certificate(models.Model):
     
     def __str__(self):
         return f"Certificate for {self.student.user.username} - {self.course.title}"
+class School(models.Model):
+    name = models.CharField(max_length=100)
+    address = models.TextField()
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(max_length=254, blank=True, null=True)
+    subscription_plan = models.CharField(max_length=50, choices=[
+        ('free', 'Free'),
+        ('basic', 'Basic'),
+        ('premium', 'Premium'),
+    ], default='free')
+    subscribed_on = models.DateTimeField(auto_now_add=True)
+    subscription_active = models.BooleanField(default=True)
+    subscription_expiry = models.DateTimeField(blank=True, null=True)
+
+
+    def __str__(self):
+        return self.name
+     
          
