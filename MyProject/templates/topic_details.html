@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topic Details - Learning System</title>
+</head>
+<body>
+    <header>
+        <h1>Topic Details</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'index' %}">Home</a></li>
+                <li><a href="{% url 'course_list' %}">Courses</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>   
+        </nav>
+    </header>
+    <main>
+        <h2>{{ topic.name }}</h2>
+        <p>{{ topic.description }}</p>
+        <p>Course: <a href="{% url 'course_detail' topic.course.id %}">{{ topic.course.name }}</a></p>
+        <p>Instructor: {{ topic.instructor.username }}</p>
+        <p>Start Date: {{ topic.start_date }}</p>
+        <p>End Date: {{ topic.end_date }}</p>
+        <p>School: {{ topic.school.name }}</p>
+        <p>Content:</p>
+        <ul>
+            {% for content in topic.contents.all %}
+                <li>
+                    <a href="{% url 'content_detail' content.id %}">{{ content.title }}</   a></li>
+            {% empty %}
+                <li>No content available for this topic.</li>
+            {% endfor %}
+        </              ul>
+        {% if user.is_authenticated %}
+            {% if user == topic.instructor %}
+                <form method="post" action="{% url 'edit_topic' topic.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Edit Topic</button>
+                </form>
+            {% endif %}
+            {% if user.is_student %}
+                <form method="post" action="{% url 'enroll_topic' topic.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Enroll in Topic</button>
+                </form>
+            {% endif %}
+        {% else %}
+            <p>Please <a href="{% url 'login' %}">log in</a> to enroll in this topic.</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2025 Learning System. All rights reserved.</p>    
+</html>

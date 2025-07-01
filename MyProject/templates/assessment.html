@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment - Learning System</title>
+</head>
+<body>  
+    <header>
+        <h1>Assessment</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'index' %}">Home</a></li>
+                <li><a href="{% url 'course_list' %}">Courses</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>{{ assessment.name }}</h2>
+        <p>{{ assessment.description }}</p>
+        <p>Course: {{ assessment.course.name }}</p>
+        <p>Instructor: {{ assessment.instructor.username }}</p>
+        <p>Start Date: {{ assessment.start_date }}</p>
+        <p>End Date: {{ assessment.end_date }}</p>
+
+        {% if user.is_authenticated %}
+            {% if user == assessment.instructor %}
+                <form method="post" action="{% url 'edit_assessment' assessment.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Edit Assessment</button>
+                </form>
+            {% endif %}
+            {% if user.is_student %}
+                <form method="post" action="{% url 'submit_assessment' assessment.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Submit Assessment</button>
+                </form>
+            {% endif %}
+        {% else %}
+            <p>Please log in to submit this assessment.</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2025 Learning System. All rights reserved.</p>
+    </footer>
+</body> 
+</html>

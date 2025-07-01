@@ -9,7 +9,9 @@ from .views import (
     assessment_detail,
     project,
     materials,
-    signup_view,       
+    signup_view,
+    save_path,
+    fetch_path,       
 )
 urlpatterns = [
     path('', index, name='index'),
@@ -22,6 +24,8 @@ urlpatterns = [
     path('project/', project, name='project'),
     path('materials/<int:material_id>/', materials, name='materials'),
     path('signup/', signup_view, name='signup'),
+    path('save-path/', save_path,name='save_path'),
+    path('fetch-path/', fetch_path,name='fetch_path'),
     
 
 ]

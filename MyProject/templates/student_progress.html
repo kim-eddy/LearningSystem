@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student progress - Learning System</title>
+</head>
+<body>
+    <header>
+        <h1>Student Progress</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'index' %}">Home</a></li>
+                <li><a href="{% url 'course_list' %}">Courses</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>{{ student.username }}'s Progress</h2>
+        <p>Email: {{ student.email }}</p>
+        <p>Full Name: {{ student.first_name }} {{ student.last_name }}</p>
+        <p>Enrolled Courses:</p>
+        <ul>
+            {% for course in student.courses.all %}
+                <li>
+                    <a href="{% url 'course_detail' course.id %}">{{ course.name }}</a>
+                    <p>{{ course.description }}</p>
+                    <p>Instructor: {{ course.instructor.username }}</p>
+                    <p>Start Date: {{ course.start_date }}</p>  
+                    <p>End Date: {{ course.end_date }}</p>
+                    <p>School: {{ course.school.name }}</p>
+                    <p>Progress: {{ course.get_progress_for_student(student) }}%</p>
+                </li>
+            {% empty %}
+                <li>No courses enrolled.</li>
+            {% endfor %}
+        </ul>
+        <p>Assessments:</p>
+        <ul>
+            {% for assessment in student.assessments.all %}
+                <li>
+                    <a href="{% url 'assessment_detail' assessment.id %}">{{ assessment.name }}</a>
+                    <p>{{ assessment.description }}</p>
+                    <p>Course: {{ assessment.course.name }}</p>
+                    <p>Instructor: {{ assessment.instructor.username }}</p>
+                    <p>Start Date: {{ assessment.start_date }}</p>  
+                    <p>End Date: {{ assessment.end_date }}</p>
+                    <p>Score: {{ assessment.get_score_for_student(student) }}</p>
+                </li>
+            {% empty %}
+                <li>No assessments available.</li>
+            {% endfor %}
+        </ul>
+    </main>
+    <footer>
+        <p>&copy; 2025 Learning System. All rights reserved.</p>        
+</html>

@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from .forms import signupForm
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
+from .mongo_service import store_learning_path, get_learning_path
+from django.http import JsonResponse
+
 @login_required
 def index(request):
     
@@ -132,7 +135,7 @@ def signup_view(request):
     else:
         form = signupForm()
     return render(request, 'signup.html', {'form': form})
-def LoginView(request):
+def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -143,8 +146,15 @@ def LoginView(request):
         else:
             return HttpResponse("Invalid credentials")
     return render(request, 'login.html')    
-def LogoutView(request):
+def logout_view(request):
     logout(request)
     return redirect('index')  
+def save_path(request):
+    store_learning_path("stu001", ["Intro", "Loops", "Functions"])
+    return JsonResponse({"status": "saved"})
+
+def fetch_path(request):
+    path = get_learning_path("stu001")
+    return JsonResponse(path, safe=False)
 
 

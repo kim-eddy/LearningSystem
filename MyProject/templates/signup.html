@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Learning System</title>
+</head>
+<body>
+    <header>
+        <h1>Sign Up for Learning System</h1>
+    </header>
+    <main>
+        <form method="post" action="{% url 'signup' %}">
+            {% csrf_token %}
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            <div>
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div>
+                <label for="phone_number">Phone Number:</label>
+                <input type="tel" id="phone_number" name="phone_number" required>
+            </div>
+            <div>
+                <label for="grade">Grade:</label>
+                <select id="grade" name="grade" required>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>  
+            </div>
+            <div>
+                <label for="school">School:</label>
+                <input type="text" id="school" name="school" required>
+                <option value="school1">School 1</option>
+                <option value="school2">School 2</option>
+                <option value="school3">School 3</option>
+                <option value="school4">School 4</option>
+            </div>
+            <div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>     
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div>
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
+            <div>
+                <button type="submit">Sign Up</button>
+            </div>
+            <div>
+                <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+            </div>
+        </form>
+        {% if form.errors %}
+            <div class="error">
+                <p>Please correct the errors below:</p>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %} 
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}    
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2025 Learning System. All rights reserved.</p>
+    </footer>
+</body>
+</html>

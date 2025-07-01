@@ -17,13 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.contrib.auth import views as logout_view
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('MyProject.urls')),  # Include the URLs from MyProject app
-    path('accounts/', include('django.contrib.auth.urls')),  # For login/logout functionality
-    path('accounts/profile/', include('MyProject.urls')), 
-    path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(template_name='registration/ logged_out.html'), name='logout'),
-    
+    path('', include('MyProject.urls')),
+    path('accounts/login', auth_views.LoginView.as_view(),name='login'),
+    path('accounts/logout', auth_views.LogoutView.as_view(next_page='login'),name='logged_out'),
 ]
+   
