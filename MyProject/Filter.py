@@ -77,7 +77,7 @@ def get_user_profile(username):
 def format_data_for_gemini(resources):
     formatted = ""
     for item in resources:
-        formatted += f"\n📘 Title: {item.get('title')}\n📝 Description: {item.get('description')}\n🌍 Source: {item.get('source')}\n🔗 URL: {item.get('url')}\n---"
+        formatted += f"\n Title: {item.get('title')}\n Description: {item.get('description')}\n🌍 Source: {item.get('source')}\n🔗 URL: {item.get('url')}\n---"
     return formatted
 
 
@@ -108,13 +108,52 @@ Below is a list of learning materials. Return the 5 most relevant as a JSON list
 Materials:
 {formatted}
 """
-    return call_gemini(prompt)
+    results = call_gemini(prompt)
+
+    if isinstance(results, list):
+        # === 1. Store in MySQL
+        try:
+            conn = mysql.connector.connect(
+                host="localhost",
+                user="emmanuel",
+                password="K7154muhell",
+                database="LearningSystem"
+            )
+            cursor = conn.cursor()
+            for item in results:
+                cursor.execute("""
+                    INSERT INTO resources (title, description, source, url)
+                    VALUES (%s, %s, %s, %s)
+                """, (item['title'], item['description'], item['source'], item['url']))
+            conn.commit()
+            conn.close()
+            print(" Saved filtered results to MySQL")
+        except Exception as e:
+            print(f" MySQL Save Error: {e}")
+
+        # === 2. Store in Redis
+        try:
+            r = redis.Redis(host='localhost', port=6379, db=0)
+            for item in results:
+                key = f"material:{item['title']}"
+                r.hset(key, mapping={
+                    "title": item['title'],
+                    "description": item['description'],
+                    "source": item['source'],
+                    "url": item['url']
+                })
+            print(" Cached filtered results in Redis")
+        except Exception as e:
+            print(f" Redis Save Error: {e}")
+
+    return results
 
 
 # === 7. RECOMMENDER FUNCTION ===
 
 def recommend_resources(user_profile):
-    print(f"\n🎁 Recommending for: {user_profile['username']} with interests: {', '.join(user_profile['interests'])}")
+    print(f"\n Recommending for: {user_profile['username']} with interests: {', '.join(user_profile['interests'])}")
+    
     data = fetch_mysql_data() + fetch_mongo_data() + fetch_redis_data()
     formatted = format_data_for_gemini(data)
 
@@ -128,7 +167,54 @@ Below are learning resources. Based on their interests and preferred sources ({'
 Materials:
 {formatted}
 """
-    return call_gemini(prompt)
+
+    # === 1. Get Gemini output
+    results = call_gemini(prompt)
+
+    # === 2. Store in MySQL
+    # === 2. Store in MySQL (with deduplication)
+try:
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="emmanuel",
+        password="K7154muhell",
+        database="LearningSystem"
+    )
+    cursor = conn.cursor()
+    
+    for item in results:
+        # Check for duplicate by title and url
+        cursor.execute("SELECT COUNT(*) FROM resources WHERE title = %s AND url = %s", (item['title'], item['url']))
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                INSERT INTO resources (title, description, source, url)
+                VALUES (%s, %s, %s, %s)
+            """, (item['title'], item['description'], item['source'], item['url']))
+    
+    conn.commit()
+    conn.close()
+    print(" Saved to MySQL (deduplicated)")
+except Exception as e:
+    print(f" MySQL Save Error: {e}")
+
+
+    # === 3. Store in Redis
+    # === 3. Store in Redis (with deduplication)
+try:
+    r = redis.Redis(host='localhost', port=6379, db=0)
+
+    for item in results:
+        key = f"material:{item['title']}"
+        if not r.exists(key):  # deduplication by title
+            r.hset(key, mapping={
+                "title": item['title'],
+                "description": item['description'],
+                "source": item['source'],
+                "url": item['url']
+            })
+    print(" Cached in Redis (deduplicated)")
+except Exception as e:
+    print(f" Redis Save Error: {e}")
 
 
 # === 8. MAIN RUNNER ===
@@ -162,4 +248,4 @@ if __name__ == "__main__":
     else:
         print("\n Results:")
         for res in results:
-            print(f"📘 {res['title']} ({res['source']})\n🔗 {res['url']}\n📝 {res['description']}\n")
+            print(f" {res['title']} ({res['source']})\n {res['url']}\n {res['description']}\n")
