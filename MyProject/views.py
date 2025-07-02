@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
 from .mongo_service import store_learning_path, get_learning_path
 from django.http import JsonResponse
+from .redis_service import save_student_session, get_student_session
 
 @login_required
 def index(request):
@@ -157,4 +158,11 @@ def fetch_path(request):
     path = get_learning_path("stu001")
     return JsonResponse(path, safe=False)
 
+def redis_save(request):
+    save_student_session("stu001", "path=AI-Course")
+    return JsonResponse({"status": "saved"})
+
+def redis_get(request):
+    data = get_student_session("stu001")
+    return JsonResponse({"data": data.decode() if data else "not found"})
 

@@ -4,6 +4,7 @@ client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource
 
 db = client["LearningSystem"]
 learning_paths = db["learning_paths"]
+collection = db["scrapped data"]
 
 def store_learning_path(student_id, path_list):
     learning_paths.insert_one({

@@ -11,7 +11,9 @@ from .views import (
     materials,
     signup_view,
     save_path,
-    fetch_path,       
+    fetch_path,
+    redis_get,
+    redis_save,       
 )
 urlpatterns = [
     path('', index, name='index'),
@@ -26,6 +28,8 @@ urlpatterns = [
     path('signup/', signup_view, name='signup'),
     path('save-path/', save_path,name='save_path'),
     path('fetch-path/', fetch_path,name='fetch_path'),
+    path('redis/get/', redis_get),
+    path('redis/save/', redis_save),
     
 
 ]
