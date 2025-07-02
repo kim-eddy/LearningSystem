@@ -1,61 +1,56 @@
-# import required modules
-import requests
-
-# get URL
-page = requests.get("https://en.wikipedia.org/wiki/Main_Page")
-
-# display status code
-print(page.status_code)
-
-# display scraped data
-print(page.content)
-# import required modules
 from bs4 import BeautifulSoup
 import requests
+from pymongo import MongoClient
 
-# get URL
-page = requests.get("https://en.wikipedia.org/wiki/Main_Page")
+# Step 1: Fetch the page
+url = "https://en.wikipedia.org/wiki/Main_Page"
+headers = {"User-Agent": "Mozilla/5.0"}  # Important for Wikipedia
 
-# scrape webpage
-soup = BeautifulSoup(page.content, 'html.parser')
+response = requests.get(url, headers=headers)
 
-# display scraped data
-print(soup.prettify())# import required modules
-from bs4 import BeautifulSoup
-import requests
+# Step 2: Check for successful fetch
+if response.status_code != 200:
+    print(f"Failed to retrieve page. Status code: {response.status_code}")
+    exit()
 
-# get URL
-page = requests.get("https://en.wikipedia.org/wiki/Main_Page")
+# Step 3: Parse the page
+soup = BeautifulSoup(response.content, 'html.parser')
 
-# scrape webpage
-soup = BeautifulSoup(page.content, 'html.parser')
+# Step 4: Extract all <p> tags and display text
+paragraphs = soup.find_all('p')
+scraped_data = []
 
-list(soup.children)
+print("All Paragraph Texts:\n")
+for p in paragraphs[:5]:  # limit to first 5 for preview
+    text = p.get_text().strip()
+    print(text)
+    print('-' * 40)
 
-# find all occurrence of p in HTML
-# includes HTML tags
-print(soup.find_all('p'))
+    # Prepare for MongoDB
+    scraped_data.append({
+        "title": "Wikipedia Main Page",
+        "description": text,
+        "source": "Wikipedia",
+        "url": url
+    })
 
-print('\n\n')
+# Step 5: Extract content from the "mp-left" section
+mp_left = soup.find(id="mp-left")
+if mp_left:
+    headlines = mp_left.find_all(class_="mp-h2")
+    print("\nMain Page Headlines:\n")
+    for h in headlines:
+        print(h.get_text().strip())
+else:
+    print("Could not find 'mp-left' section")
 
-# return only text
-# does not include HTML tags
-print(soup.find_all('p')[0].get_text())# import required modules
-from bs4 import BeautifulSoup
-import requests
+# Step 6: Save to MongoDB
+mongo_client = MongoClient("mongodb://localhost:27017/")
+mongo_db = mongo_client["LearningSystem"]
+mongo_collection = mongo_db["scraped_content"]
 
-# get URL
-page = requests.get("https://en.wikipedia.org/wiki/Main_Page")
-
-# scrape webpage
-soup = BeautifulSoup(page.content, 'html.parser')
-
-# create object
-object = soup.find(id="mp-left")
-
-# find tags
-items = object.find_all(class_="mp-h2")
-result = items[0]
-
-# display tags
-print(result.prettify())
+if scraped_data:
+    mongo_collection.insert_many(scraped_data)
+    print(f"\n Inserted {len(scraped_data)} items into MongoDB.")
+else:
+    print("No content to insert.")

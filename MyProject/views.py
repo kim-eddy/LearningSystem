@@ -8,6 +8,7 @@ from django.shortcuts import redirect
 from .mongo_service import store_learning_path, get_learning_path
 from django.http import JsonResponse
 from .redis_service import save_student_session, get_student_session
+from .celery_tasks import generate_learning_path
 
 @login_required
 def index(request):
@@ -165,4 +166,8 @@ def redis_save(request):
 def redis_get(request):
     data = get_student_session("stu001")
     return JsonResponse({"data": data.decode() if data else "not found"})
+def start_path_generation(request):
+    task = generate_learning_path.delay("stu001")
+    return JsonResponse({"task_id": task.id})
+
 

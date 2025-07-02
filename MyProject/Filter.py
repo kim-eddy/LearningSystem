@@ -7,7 +7,7 @@ import redis
 import json
 
 # === 1. CONFIG ===
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
+genai.configure(api_key="AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk")
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 
@@ -16,10 +16,10 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 def fetch_mysql_data():
     conn = mysql.connector.connect(
         host="localhost",
-        port = '3306'
+        port = '3306',
         user="emmanuel",
         password="K7154muhell",
-        database="LearningSystem"
+        database="LearningSystem",
     )
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT title, description, source, url FROM resources")
@@ -29,8 +29,9 @@ def fetch_mysql_data():
 
 
 def fetch_mongo_data():
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["your_db"]
+    client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+
+    db = client["LearningSystem"]
     collection = db["resources"]
     results = collection.find({}, {"_id": 0, "title": 1, "description": 1, "source": 1, "url": 1})
     return list(results)
@@ -52,9 +53,9 @@ def fetch_redis_data():
 def get_user_profile(username):
     conn = mysql.connector.connect(
         host="localhost",
-        user="your_user",
-        password="your_password",
-        database="your_database"
+        user="emmanuel",
+        password="K7154muhell",
+        database="LearningSystem"
     )
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM student_profiles WHERE username = %s", (username,))
@@ -86,9 +87,11 @@ def call_gemini(prompt):
     try:
         response = model.generate_content(prompt)
         return json.loads(response.text)
+    except json.JSONDecodeError:
+        print(" Invalid JSON returned:\n", response.text)
+        return {"error": "Invalid JSON returned by Gemini"}
     except Exception as e:
         return {"error": f"Gemini error: {str(e)}"}
-
 
 # === 6. FILTER FUNCTION ===
 
@@ -146,17 +149,17 @@ if __name__ == "__main__":
         if user_profile:
             results = recommend_resources(user_profile)
         else:
-            print("❌ Profile not found.")
+            print("Profile not found.")
             exit()
 
     else:
-        print("❌ Invalid choice")
+        print("Invalid choice")
         exit()
 
     # Output
     if "error" in results:
-        print(f"\n⚠️ Error: {results['error']}")
+        print(f"\nError: {results['error']}")
     else:
-        print("\n✅ Results:")
+        print("\n Results:")
         for res in results:
             print(f"📘 {res['title']} ({res['source']})\n🔗 {res['url']}\n📝 {res['description']}\n")
