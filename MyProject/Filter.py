@@ -1,5 +1,3 @@
-# smart_learning_assistant.py
-
 from google import generativeai as genai
 import mysql.connector
 from pymongo import MongoClient
@@ -86,7 +84,16 @@ def format_data_for_gemini(resources):
 def call_gemini(prompt):
     try:
         response = model.generate_content(prompt)
-        return json.loads(response.text)
+        raw_text = response.text.strip()
+
+        # Remove Markdown-style ```json wrapping if present
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]  # remove ```json
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]  # remove closing ```
+
+        return json.loads(raw_text)
+
     except json.JSONDecodeError:
         print(" Invalid JSON returned:\n", response.text)
         return {"error": "Invalid JSON returned by Gemini"}
@@ -171,57 +178,57 @@ Materials:
     # === 1. Get Gemini output
     results = call_gemini(prompt)
 
-    # === 2. Store in MySQL
     # === 2. Store in MySQL (with deduplication)
-try:
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="emmanuel",
-        password="K7154muhell",
-        database="LearningSystem"
-    )
-    cursor = conn.cursor()
-    
-    for item in results:
-        # Check for duplicate by title and url
-        cursor.execute("SELECT COUNT(*) FROM resources WHERE title = %s AND url = %s", (item['title'], item['url']))
-        if cursor.fetchone()[0] == 0:
-            cursor.execute("""
-                INSERT INTO resources (title, description, source, url)
-                VALUES (%s, %s, %s, %s)
-            """, (item['title'], item['description'], item['source'], item['url']))
-    
-    conn.commit()
-    conn.close()
-    print(" Saved to MySQL (deduplicated)")
-except Exception as e:
-    print(f" MySQL Save Error: {e}")
+    if isinstance(results, list):
+        try:
+            conn = mysql.connector.connect(
+                host="localhost",
+                user="emmanuel",
+                password="K7154muhell",
+                database="LearningSystem"
+            )
+            cursor = conn.cursor()
 
+            for item in results:
+                # Check for duplicate by title and url
+                cursor.execute("SELECT COUNT(*) FROM resources WHERE title = %s AND url = %s", (item['title'], item['url']))
+                if cursor.fetchone()[0] == 0:
+                    cursor.execute("""
+                        INSERT INTO resources (title, description, source, url)
+                        VALUES (%s, %s, %s, %s)
+                    """, (item['title'], item['description'], item['source'], item['url']))
 
-    # === 3. Store in Redis
-    # === 3. Store in Redis (with deduplication)
-try:
-    r = redis.Redis(host='localhost', port=6379, db=0)
+            conn.commit()
+            conn.close()
+            print(" Saved to MySQL (deduplicated)")
+        except Exception as e:
+            print(f" MySQL Save Error: {e}")
 
-    for item in results:
-        key = f"material:{item['title']}"
-        if not r.exists(key):  # deduplication by title
-            r.hset(key, mapping={
-                "title": item['title'],
-                "description": item['description'],
-                "source": item['source'],
-                "url": item['url']
-            })
-    print(" Cached in Redis (deduplicated)")
-except Exception as e:
-    print(f" Redis Save Error: {e}")
+        
+        try:
+            r = redis.Redis(host='localhost', port=6379, db=0)
 
+            for item in results:
+                key = f"material:{item['title']}"
+                if not r.exists(key):  
+                    r.hset(key, mapping={
+                        "title": item['title'],
+                        "description": item['description'],
+                        "source": item['source'],
+                        "url": item['url']
+                    })
+            print(" Cached in Redis (deduplicated)")
+        except Exception as e:
+            print(f" Redis Save Error: {e}")
+    else:
+        print(" Gemini returned error or invalid response. Skipping database storage.")
 
+    return results
 # === 8. MAIN RUNNER ===
 
 if __name__ == "__main__":
     print("=== Smart Learning Assistant ===\n")
-    
+
     mode = input("Choose mode: (1) Filter (2) Recommend → ")
 
     if mode == "1":
@@ -242,10 +249,11 @@ if __name__ == "__main__":
         print("Invalid choice")
         exit()
 
-    # Output
-    if "error" in results:
+    # Output results
+    if isinstance(results, dict) and "error" in results:
         print(f"\nError: {results['error']}")
     else:
         print("\n Results:")
         for res in results:
-            print(f" {res['title']} ({res['source']})\n {res['url']}\n {res['description']}\n")
+            print(f" {res['title']} ({res['source']})")
+            print(f" {res['url']}\n {res['description']}\n")

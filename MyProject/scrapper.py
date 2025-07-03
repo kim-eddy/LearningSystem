@@ -45,7 +45,7 @@ else:
     print("Could not find 'mp-left' section")
 
 # Step 6: Save to MongoDB
-mongo_client = MongoClient("mongodb://localhost:27017/")
+mongo_client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
 mongo_db = mongo_client["LearningSystem"]
 mongo_collection = mongo_db["scraped_content"]
 

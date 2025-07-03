@@ -9,6 +9,19 @@ from .mongo_service import store_learning_path, get_learning_path
 from django.http import JsonResponse
 from .redis_service import save_student_session, get_student_session
 from .celery_tasks import generate_learning_path
+from celery_tasks import generate_recommendations_task
+from Filter import get_user_profile
+
+username = "student123"
+profile = get_user_profile(username)
+
+if profile:
+    generate_recommendations_task.delay(
+        username,
+        profile['interests'],
+        profile['fav_sources']
+    )
+
 
 @login_required
 def index(request):
