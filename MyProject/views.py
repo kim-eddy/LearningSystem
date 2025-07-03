@@ -11,6 +11,7 @@ from .redis_service import save_student_session, get_student_session
 from .celery_tasks import generate_learning_path
 from celery_tasks import generate_recommendations_task
 from Filter import get_user_profile
+from django.db import connection
 
 username = "student123"
 profile = get_user_profile(username)
@@ -183,4 +184,11 @@ def start_path_generation(request):
     task = generate_learning_path.delay("stu001")
     return JsonResponse({"task_id": task.id})
 
+
+def save_student_score(username, topic_id, score):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO student_assessments (username, topic_id, score)
+            VALUES (%s, %s, %s)
+        """, [username, topic_id, score])
 

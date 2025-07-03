@@ -4,12 +4,12 @@ from pymongo import MongoClient
 import redis
 import json
 
-# === 1. CONFIG ===
+
 genai.configure(api_key="AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk")
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 
-# === 2. DATABASE FETCHERS ===
+
 
 def fetch_mysql_data():
     conn = mysql.connector.connect(
@@ -46,7 +46,7 @@ def fetch_redis_data():
     return results
 
 
-# === 3. FETCH STUDENT PROFILE ===
+
 
 def get_user_profile(username):
     conn = mysql.connector.connect(
@@ -56,21 +56,34 @@ def get_user_profile(username):
         database="LearningSystem"
     )
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM student_profiles WHERE username = %s", (username,))
-    result = cursor.fetchone()
-    conn.close()
 
-    if result:
-        return {
-            "username": result["username"],
-            "interests": json.loads(result["interests"]),
-            "fav_sources": json.loads(result["fav_sources"])
-        }
-    else:
+    
+    cursor.execute("SELECT * FROM MyProject_student_profile WHERE username = %s", (username,))
+    result = cursor.fetchone()
+
+    if not result:
+        conn.close()
         return None
 
+    
+    cursor.execute("""
+        SELECT topic_id FROM student_assessment
+        WHERE username = %s AND score < 50
+    """, (username,))
+    weak_topics = [row['topic_id'] for row in cursor.fetchall()]
 
-# === 4. FORMATTER ===
+    conn.close()
+
+    return {
+        "username": result["username"],
+        "interests": json.loads(result["interests"]),
+        "fav_sources": json.loads(result["fav_sources"]),
+        "weak_topics": weak_topics
+    }
+
+
+
+
 
 def format_data_for_gemini(resources):
     formatted = ""
@@ -79,18 +92,17 @@ def format_data_for_gemini(resources):
     return formatted
 
 
-# === 5. GEMINI CALL ===
+
 
 def call_gemini(prompt):
     try:
         response = model.generate_content(prompt)
         raw_text = response.text.strip()
 
-        # Remove Markdown-style ```json wrapping if present
         if raw_text.startswith("```json"):
-            raw_text = raw_text[7:]  # remove ```json
+            raw_text = raw_text[7:]  
         if raw_text.endswith("```"):
-            raw_text = raw_text[:-3]  # remove closing ```
+            raw_text = raw_text[:-3]  
 
         return json.loads(raw_text)
 
@@ -100,10 +112,10 @@ def call_gemini(prompt):
     except Exception as e:
         return {"error": f"Gemini error: {str(e)}"}
 
-# === 6. FILTER FUNCTION ===
+
 
 def filter_resources(query):
-    print(f"\n🔍 Filtering resources for: {query}")
+    print(f"\n Filtering resources for: {query}")
     data = fetch_mysql_data() + fetch_mongo_data() + fetch_redis_data()
     formatted = format_data_for_gemini(data)
 
@@ -118,7 +130,7 @@ Materials:
     results = call_gemini(prompt)
 
     if isinstance(results, list):
-        # === 1. Store in MySQL
+        
         try:
             conn = mysql.connector.connect(
                 host="localhost",
@@ -138,7 +150,7 @@ Materials:
         except Exception as e:
             print(f" MySQL Save Error: {e}")
 
-        # === 2. Store in Redis
+        
         try:
             r = redis.Redis(host='localhost', port=6379, db=0)
             for item in results:
@@ -156,14 +168,25 @@ Materials:
     return results
 
 
-# === 7. RECOMMENDER FUNCTION ===
+
 
 def recommend_resources(user_profile):
     print(f"\n Recommending for: {user_profile['username']} with interests: {', '.join(user_profile['interests'])}")
-    
-    data = fetch_mysql_data() + fetch_mongo_data() + fetch_redis_data()
-    formatted = format_data_for_gemini(data)
 
+    
+    all_data = fetch_mysql_data() + fetch_mongo_data() + fetch_redis_data()
+    
+    filtered_data = [
+        item for item in all_data 
+        if 'topic_id' in item and str(item['topic_id']) in map(str, user_profile['weak_topics'])
+    ]
+
+    if not filtered_data:
+        print(" No relevant materials found for the student's weak topics.")
+        return {"error": "No materials to recommend."}
+
+    
+    formatted = format_data_for_gemini(filtered_data)
     interests = ', '.join(user_profile['interests'])
 
     prompt = f"""
@@ -175,10 +198,10 @@ Materials:
 {formatted}
 """
 
-    # === 1. Get Gemini output
+    
     results = call_gemini(prompt)
 
-    # === 2. Store in MySQL (with deduplication)
+    
     if isinstance(results, list):
         try:
             conn = mysql.connector.connect(
@@ -190,41 +213,39 @@ Materials:
             cursor = conn.cursor()
 
             for item in results:
-                # Check for duplicate by title and url
                 cursor.execute("SELECT COUNT(*) FROM resources WHERE title = %s AND url = %s", (item['title'], item['url']))
                 if cursor.fetchone()[0] == 0:
                     cursor.execute("""
                         INSERT INTO resources (title, description, source, url)
                         VALUES (%s, %s, %s, %s)
                     """, (item['title'], item['description'], item['source'], item['url']))
-
             conn.commit()
             conn.close()
-            print(" Saved to MySQL (deduplicated)")
+            print("  Saved to MySQL (deduplicated)")
         except Exception as e:
-            print(f" MySQL Save Error: {e}")
+            print(f"  MySQL Save Error: {e}")
 
-        
         try:
             r = redis.Redis(host='localhost', port=6379, db=0)
-
             for item in results:
                 key = f"material:{item['title']}"
-                if not r.exists(key):  
+                if not r.exists(key):
                     r.hset(key, mapping={
                         "title": item['title'],
                         "description": item['description'],
                         "source": item['source'],
                         "url": item['url']
                     })
-            print(" Cached in Redis (deduplicated)")
+            print("  Cached in Redis (deduplicated)")
         except Exception as e:
-            print(f" Redis Save Error: {e}")
+            print(f"  Redis Save Error: {e}")
     else:
-        print(" Gemini returned error or invalid response. Skipping database storage.")
+        print("  Gemini returned error or invalid response. Skipping database storage.")
 
     return results
-# === 8. MAIN RUNNER ===
+
+
+
 
 if __name__ == "__main__":
     print("=== Smart Learning Assistant ===\n")
@@ -242,18 +263,17 @@ if __name__ == "__main__":
         if user_profile:
             results = recommend_resources(user_profile)
         else:
-            print("Profile not found.")
+            print(" Profile not found.")
             exit()
-
     else:
-        print("Invalid choice")
+        print(" Invalid choice")
         exit()
 
-    # Output results
+    
     if isinstance(results, dict) and "error" in results:
-        print(f"\nError: {results['error']}")
+        print(f"\n Error: {results['error']}")
     else:
-        print("\n Results:")
+        print("\n Recommended Results:")
         for res in results:
-            print(f" {res['title']} ({res['source']})")
-            print(f" {res['url']}\n {res['description']}\n")
+            print(f"  {res['title']} ({res['source']})")
+            print(f" {res['url']}\n  {res['description']}\n")
