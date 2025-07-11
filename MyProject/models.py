@@ -117,7 +117,7 @@ class School(models.Model):
      
 class LearningGoal(models.Model):
     student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)  # e.g. "Full Stack Developer"
+    title = models.CharField(max_length=255)  
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -127,6 +127,8 @@ class LearningGoal(models.Model):
 class LearningPath(models.Model):
     goal = models.ForeignKey(LearningGoal, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE, null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=True)
     order = models.PositiveIntegerField()
     status = models.CharField(
         max_length=20,
@@ -199,4 +201,16 @@ class AI_Assessment(models.Model):
 class Enrollment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
-    enrollment_date = models.DateTimeField(auto_now_add=True)       
+    enrollment_date = models.DateTimeField(auto_now_add=True) 
+
+class TopicProgress(models.Model):
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    progress_percentage = models.FloatField(default=0.0)
+    last_accessed = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'topic')
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.topic.name} - {self.progress_percentage}%"      

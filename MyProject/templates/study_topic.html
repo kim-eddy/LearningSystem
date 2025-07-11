@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Study Topic - {{ topic.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: #f4f6fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(42,82,152,0.08);
+            padding: 32px 28px 24px 28px;
+        }
+        h2 {
+            color: #2a5298;
+            margin-top: 0;
+        }
+        .topic-link {
+            color: #2a5298;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .card {
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(42,82,152,0.05);
+        }
+        .card h3 {
+            margin: 0 0 8px 0;
+            color: #1a3c6b;
+        }
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-success {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .btn-primary {
+            background: #2a5298;
+            color: #fff;
+            margin-left: 8px;
+        }
+        .status-completed {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .progress-info {
+            color: #2a5298;
+            font-size: 1rem;
+        }
+        a.back-link {
+            display: inline-block;
+            margin-top: 24px;
+            color: #2a5298;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a.back-link:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>{{ topic.name }}</h2>
+
+    <strong>Topic:</strong>
+    <a class="topic-link" href="{% url 'study_topic' topic_id=topic.id %}">{{ topic.name }}</a>
+
+    {% for r in resources %}
+      <div class="card">
+        <h3>{{ r.title }}</h3>
+        {% if r.url and r.url != " " and r.url != "#" %}
+          <p><a href="{{ r.url }}" target="_blank">Visit Resource</a></p>
+        {% endif %}
+        <div>{{ r.description|safe }}</div>
+      </div>
+    {% empty %}
+      <p>No resources found for this topic.</p>
+    {% endfor %}
+
+    <!--  Mark as Completed Form -->
+    {% if progress and progress.progress_percentage == 100 %}
+      <p class="status-completed"><strong>Status:</strong>  Completed</p>
+    {% else %}
+      <form method="POST" action="{% url 'mark_topic_completed' topic.id %}">
+        {% csrf_token %}
+        <button class="btn btn-success">Mark as Completed</button>
+      </form>
+      {% if progress %}
+        <p class="progress-info"><strong>Current Progress:</strong> {{ progress.progress_percentage }}%</p>
+      {% endif %}
+    {% endif %}
+
+    <button id="updateProgressBtn" class="btn btn-primary">Next</button>
+
+    <br>
+    <a class="back-link" href="{% url 'learning_path_view' %}">&larr; Learning Path</a>
+</div>
+
+<script>
+document.getElementById("updateProgressBtn").addEventListener("click", function () {
+    fetch("{% url 'update_progress' topic.id %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.progress !== undefined) {
+            alert("Progress updated to " + data.progress + "%");
+            location.reload();
+        } else {
+            alert("Error: " + data.error);
+        }
+    });
+});
+</script>
+</body>
+</html>

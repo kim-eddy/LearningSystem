@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Course, Topic, Assessment, Materials, Student_Profile, Student_Progress, AI_Assessment
+from .models import Course, Topic, Assessment, Materials, Student_Profile, Student_Progress, AI_Assessment, LearningPath
 from django.contrib.auth.decorators import login_required
 from .forms import SignupForm, StudentProfileUpdateForm
 from django.contrib.auth import authenticate, login, logout
@@ -9,7 +9,10 @@ from .mongo_service import store_learning_path, get_learning_path
 from django.http import JsonResponse
 from .redis_service import save_student_session, get_student_session
 from .celery_tasks import generate_recommendations_task
-from .Filter import get_user_profile
+from django.utils import timezone
+from django.views.decorators.http import require_POST   
+from .models import TopicProgress, Student_Profile, Course
+from django.shortcuts import redirect
 from django.db import connection
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
@@ -17,13 +20,14 @@ from .learning_path import build_learning_path
 from .scrapper import scrape_topic_data
 from .Filter import filter_resources
 from .analyzer import analyze_student_performance
+from django.views.decorators.csrf import csrf_exempt    
 from pymongo import MongoClient 
 import requests
+import markdown
 
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 
 
@@ -192,14 +196,38 @@ def assessment_detail(request, assessment_id=None):
             if ans and ans.strip() == q.correct_answer.strip():
                 score += 1
         percentage = round((score / total) * 100, 2) if total else 0
-        return render(request, 'quiz_result.html', {
-            'score': score,
-            'total': total,
-            'percentage': percentage,
-            'user_answers': user_answers,
-            'course': course,
-            'topic': topic
-        })
+
+        # Advanced ordering: analyze and order topics
+        # For AI assessments, analyze performance using ai_questions and user_answers
+        # If your analyzer expects an object with .topic and .correct_answer, you can adapt it:
+        topic_stats = {}
+        for idx, q in enumerate(ai_questions):
+            topic_id = q.topic.id if q.topic else None
+            is_correct = (
+                user_answers[idx]['selected'] and
+                user_answers[idx]['selected'].strip().lower() == q.correct_answer.strip().lower()
+            )
+            if topic_id not in topic_stats:
+                topic_stats[topic_id] = {'correct': 0, 'total': 0}
+            topic_stats[topic_id]['total'] += 1
+            if is_correct:
+                topic_stats[topic_id]['correct'] += 1
+
+        topic_scores = {}
+        for topic_id, stats in topic_stats.items():
+            topic_scores[topic_id] = stats['correct'] / stats['total'] if stats['total'] else 0.0
+
+        all_topics = Topic.objects.filter(course=course)
+        ordered_topics = sorted(
+            all_topics,
+            key=lambda t: topic_scores.get(t.id, 1)  # topics not assessed are treated as strongest (score=1)
+        )
+
+        scraped = scrape_topic_data([t.name for t in ordered_topics])
+        filtered = filter_resources(scraped)
+        build_learning_path(student_profile, course, ordered_topics, filtered)
+
+        return redirect('learning_path_view')
     else:
         # Generate new quiz
         prompt = f"""
@@ -289,26 +317,20 @@ def project(request):
         
         
 
-        weak_topic_ids = analyze_student_performance(assessment, answers)
-        weak_topics = Topic.objects.filter(id__in=weak_topic_ids)
+        topic_scores = analyze_student_performance(assessment, answers)  # {topic_id: percent}
+        all_topics = Topic.objects.filter(course=assessment.course)
+        ordered_topics = sorted(
+            all_topics,
+            key=lambda t: topic_scores.get(t.id, 0)  # topics with no score are treated as strongest
+        )
 
-        logger.info(f"Scraping topics: {[t.name for t in weak_topics]}")
+        logger.info(f"Scraping topics: {[t.name for t in ordered_topics]}")
 
-        # Step 3: Scrape & Filter
-        scraped = scrape_topic_data([t.name for t in weak_topics])
+        scraped = scrape_topic_data([t.name for t in ordered_topics])
         filtered = filter_resources(scraped)
+        build_learning_path(student, assessment.course, ordered_topics, filtered)
 
-        logger.info(f"Filtered data: {filter_resources}")
-
-
-        # Step 4: Build Path
-        build_learning_path(student, assessment.course, weak_topics, filtered)
-
-        return render(request, 'assessment_result.html', {
-            'score': score,
-            'total': len(correct_answers),
-            'percentage': round((score / len(correct_answers)) * 100, 2)
-        })
+        return redirect('learning_path_view')  # or 'learning_resources'
 
     else:
         assessment_id = request.GET.get('assessment_id')
@@ -390,7 +412,7 @@ def signup_view(request):
                 last_name=form.cleaned_data['last_name'],
                 password=form.cleaned_data['password'],  
             )
-
+            user.save()
             student_profile = Student_Profile.objects.create(
                 user=user,
                 phone_number=form.cleaned_data['phone_number'],
@@ -449,16 +471,63 @@ def save_student_score(user, topic_id, score):
 @login_required
 def learning_path_view(request):
     user = request.user
-    path = get_learning_path(user)
+    student = Student_Profile.objects.get(user=user)
+    path_entries = LearningPath.objects.filter(student=student).order_by('order')
+    learning_path = []
 
-    if not path:
-        return HttpResponse("No personalized learning path found yet.")
+    # MongoDB setup
+    from pymongo import MongoClient
+    mongo_client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+    mongo_collection = mongo_client["LearningSystem"]["scraped_content"]
 
-    return render(request, 'learning_path.html', {
-        'learning_path': path
-    })
+    for entry in path_entries:
+        # Try to fetch resources from DB (MongoDB or other)
+        resources = list(mongo_collection.find({
+            "title": {"$regex": entry.topic.name, "$options": "i"},
+            "user_id": user.id
+        }))
 
+        # Fallback to Gemini if no resources found
+        if not resources:
+            # Check if an AI-generated resource already exists for this topic/user
+            ai_resource = mongo_collection.find_one({
+                "title": f"AI-generated: {entry.topic.name}",
+                "user_id": user.id
+            })
+            if ai_resource:
+                resources = [ai_resource]
+            else:
+                prompt = f"Provide a concise, student-friendly summary and a practical example for the topic '{entry.topic.name}' in the course '{entry.course.title}'."
+                try:
+                    GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk"
+                    payload = {
+                        "contents": [{"parts": [{"text": prompt}]}]
+                    }
+                    response = requests.post(GEMINI_API_URL, json=payload)
+                    response.raise_for_status()
+                    gemini_text = response.json()['candidates'][0]['content']['parts'][0]['text']
+                    resource_doc = {
+                        "title": f"AI-generated: {entry.topic.name}",
+                        "url": " ",
+                        "description": gemini_text,
+                        "topic": entry.topic.name,
+                        "course": entry.course.title,
+                        "user_id": user.id
+                    }
+                    mongo_collection.insert_one(resource_doc)
+                    resources = [resource_doc]
+                except Exception as e:
+                    resources = [{
+                        "title": "No resources found",
+                        "url": " ",
+                        "description": f"Could not fetch content from Gemini: {e}"
+                    }]
 
+        learning_path.append({
+            "topic": entry.topic,      # Pass the Topic object
+            "resources": resources
+        })
+    return render(request, 'learning_path.html', {"learning_path": learning_path})
 
 @login_required
 def learning_resources(request):
@@ -475,3 +544,83 @@ def learning_resources(request):
     return render(request, 'learning_resources.html', {
         "resources": resources
     })
+
+def study_topic_view(request, topic_id):
+    user = request.user
+    topic = get_object_or_404(Topic, id=topic_id)
+
+    # MongoDB connection
+    client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+    db = client["LearningSystem"]
+    collection = db["scraped_content"]
+
+    # Try fetching existing resources
+    resources = list(collection.find({
+        "topic": topic.name,
+        "user_id": int(user.id)
+    }))
+
+    # Fallback: scrape if no data found
+    if not resources:
+        scraped_data = scrape_topic_data([topic.name])
+        if scraped_data:
+            for item in scraped_data:
+                item["user_id"] = int(user.id)
+                collection.insert_one(item)
+            resources = scraped_data
+        else:
+            resources = [{
+                "title": "No resources found",
+                "url": " ",
+                "description": "No resources available for this topic."
+            }]
+
+    # Convert descriptions to HTML using markdown
+    for res in resources:
+        try:
+            res["description"] = markdown.markdown(res.get("description", ""))
+        except Exception as e:
+            logger.warning(f"Markdown conversion failed: {e}")
+            res["description"] = "<p><em>Failed to load content.</em></p>"
+    for res in resources:
+        try:
+            res["description"] = markdown.markdown(res.get("description", ""))
+        except Exception as e:
+            logger.warning(f"Markdown conversion failed: {e}")
+            res["description"] = "<p><em>Failed to load content.</em></p>"
+    return render(request, "study_topic.html", {
+        "topic": topic,
+        "resources": resources
+    })
+
+@require_POST
+def mark_topic_completed(request, topic_id):
+    student = Student_Profile.objects.get(user=request.user)
+    topic = Topic.objects.get(id=topic_id)
+
+    progress, created = TopicProgress.objects.get_or_create(
+        student=student,
+        topic=topic
+    )
+    progress.progress_percentage = 100.0
+    progress.last_accessed = timezone.now()
+    progress.save()
+
+    return redirect('study_topic', topic_id=topic_id)
+
+
+@csrf_exempt
+def update_progress(request, topic_id):
+    if request.method == 'POST':
+        student = Student_Profile.objects.get(user=request.user)
+        topic = Topic.objects.get(id=topic_id)
+
+        progress, _ = TopicProgress.objects.get_or_create(student=student, topic=topic)
+        
+        # Increment progress by 25%, max 100%
+        progress.progress_percentage = min(progress.progress_percentage + 25.0, 100.0)
+        progress.save()
+
+        return JsonResponse({"progress": progress.progress_percentage})
+    return JsonResponse({"error": "Invalid request"}, status=400)
+

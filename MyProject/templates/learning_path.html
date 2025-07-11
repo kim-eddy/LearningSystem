@@ -1,9 +1,99 @@
-<h2>Your Personalized Learning Path</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Path - Learning System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+        header {
+            background: #2a5298;
+            color: #fff;
+            padding: 10px 20px;
+        }
+        h2 {
+            margin: 0;
+            font-size: 24px;
+        } 
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        nav a:hover {
+            color: #ffd700;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(42,82,152,0.08);
+            padding: 2rem 2.5rem;
+        }
+        .card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            font-weight: bold;
+            color: #2a5298;
+        }
+        .card-body ul {
+            padding-left: 1.2rem;
+        }
+        .card-body li {
+            margin-bottom: 0.7rem;
+            font-size: 1.08rem;
+        }
+        .card-body a {
+            color: #2a5298;
+            text-decoration: none;
+        }
+        .card-body a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h2>Learning Path</h2>
+    <nav>
+        <ul>
+            <li><a href="{% url 'index' %}">Home</a></li>
+            <li><a href="{% url 'course_list' %}">Courses</a></li>
+            <li><a href="{% url 'student_progress' %}">Student Progress</a></li>
+        </ul>
+    </nav>
+</header>
+<main>
 
 {% for topic in learning_path %}
   <div class="card mb-3">
     <div class="card-header">
-      <strong>Topic:</strong> {{ topic.topic }}
+      <strong>Topic:</strong>
+      <a href="{% url 'study_topic' topic_id=topic.topic.id %}">
+        {{ topic.topic.name }}
+      </a>
     </div>
     <div class="card-body">
       <ul>

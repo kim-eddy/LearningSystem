@@ -1,5 +1,6 @@
 from django.urls import path
 from .generate_learning_path import generate_learning_path_view
+
 from .views import (
     index,
     course_list,
@@ -17,7 +18,11 @@ from .views import (
     redis_save,
     Quiz_view,
     learning_resources,
-    
+    learning_path_view,
+    study_topic_view,
+    mark_topic_completed,
+    update_progress
+
 )
 urlpatterns = [
     path('', index, name='index'),
@@ -38,5 +43,11 @@ urlpatterns = [
     path('quiz/', Quiz_view, name='quiz'),
     path('learning-resources/', learning_resources, name='learning_resources'),
     path('generate-learning-path/', generate_learning_path_view, name='generate_learning_path'),
+    path('learning-path/', learning_path_view, name='learning_path_view'),
+    path('study-topic/<int:topic_id>/', study_topic_view, name='study_topic'),
+    path('study-topic/<int:topic_id>/progress/', update_progress, name='update_progress'),
+    path('study-topic/<int:topic_id>/resources/', study_topic_view, name='study_topic_resources'),
+    path('study/topic/<int:topic_id>/complete/', mark_topic_completed, name='mark_topic_completed'),
+
 
 ]

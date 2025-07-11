@@ -1,25 +1,29 @@
 def analyze_student_performance(assessment, submitted_answers):
     """
-    Compare submitted answers to correct ones, and identify weak topics.
-    Returns a list of weak topic IDs.
+    Compare submitted answers to correct ones, and return a dict of topic_id: score_percent.
     """
-
     correct_answers = assessment.answer.split(',')
     questions = assessment.questions.split('|')  
-    weak_topic_ids = []
+    topic_ids = [assessment.topic.id] * len(questions)  # If all questions are from one topic
 
-    total_questions = len(correct_answers)
-    threshold = 0.6  # below 60% means weak topic
+    # If you have per-question topics, replace the above with the correct mapping
 
-    correct_count = 0
+    topic_stats = {}
     for i, submitted in enumerate(submitted_answers):
-        if i < len(correct_answers) and submitted.strip().lower() == correct_answers[i].strip().lower():
-            correct_count += 1
+        topic_id = topic_ids[i]
+        is_correct = (
+            i < len(correct_answers) and
+            submitted.strip().lower() == correct_answers[i].strip().lower()
+        )
+        if topic_id not in topic_stats:
+            topic_stats[topic_id] = {'correct': 0, 'total': 0}
+        topic_stats[topic_id]['total'] += 1
+        if is_correct:
+            topic_stats[topic_id]['correct'] += 1
 
-    score_percent = correct_count / total_questions
+    # Calculate percent correct per topic
+    topic_scores = {}
+    for topic_id, stats in topic_stats.items():
+        topic_scores[topic_id] = stats['correct'] / stats['total'] if stats['total'] else 0.0
 
-    if score_percent < threshold:
-        # Consider the entire topic weak
-        weak_topic_ids.append(assessment.topic.id)
-
-    return weak_topic_ids
+    return topic_scores  # {topic_id: percent_correct, ...}
