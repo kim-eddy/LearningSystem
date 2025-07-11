@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assessment Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+        .container {
+            max-width: 600px;
+            margin: 3rem auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(42,82,152,0.08);
+            padding: 2rem 2.5rem;
+        }
+        h1 {
+            color: #2a5298;
+            font-size: 2rem;
+            margin-top: 0;
+        }
+        p {
+            font-size: 1.08rem;
+        }
+        .btn-quiz {
+            display: inline-block;
+            margin-top: 1.5rem;
+            background: #2a5298;
+            color: #fff;
+            padding: 0.7rem 2.2rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-quiz:hover {
+            background: #1e3c72;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Assessment Details</h1>
+        {% if assessment %}
+            <p><strong>Question:</strong> {{ assessment.question }}</p>
+            <p><strong>Course:</strong> {{ course.title }}</p>
+            <p><strong>Topic:</strong> {{ topic.name }}</p>
+            <a class="btn-quiz" href="{% url 'quiz' %}?assessment_id={{ assessment.id }}">Take Quiz</a>
+        {% elif auto_questions %}
+            <p><strong>AI-Generated Assessment for Grade {{ grade }}</strong></p>
+            <form method="post" action="">
+                {% csrf_token %}
+                <ol>
+                    {% for q in auto_questions %}
+                        <li style="margin-bottom:1.2rem;">
+                            <div><strong>{{ q.question }}</strong></div>
+                            <div style="color:#2a5298; font-size:0.98em; margin-bottom:0.3rem;">
+                                <strong>Topic:</strong> {{ q.topic }}
+                            </div>
+                            <ul style="margin-top:0.5rem; list-style-type: none; padding-left: 0;">
+                                {% for opt in q.options %}
+                                    <li>
+                                        <label>
+                                            <input type="radio" name="answers_{{ forloop.parentloop.counter0 }}" value="{{ opt }}" required>
+                                            {{ opt }}
+                                        </label>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endfor %}
+                </ol>
+                <button type="submit" class="btn-quiz" style="margin-top:1.5rem;">Submit Answers</button>
+            </form>
+        {% else %}
+            <p>No assessment data available.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

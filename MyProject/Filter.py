@@ -3,6 +3,14 @@ import mysql.connector
 from pymongo import MongoClient
 import redis
 import json
+import os
+import django
+import sys
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LearningSystem.settings")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+django.setup()
 
 
 genai.configure(api_key="AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk")
@@ -20,7 +28,7 @@ def fetch_mysql_data():
         database="LearningSystem",
     )
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT title, description, source, url FROM resources")
+    cursor.execute("SELECT title, description, source, url, topic_id FROM resources")
     data = cursor.fetchall()
     conn.close()
     return data
@@ -31,7 +39,7 @@ def fetch_mongo_data():
 
     db = client["LearningSystem"]
     collection = db["resources"]
-    results = collection.find({}, {"_id": 0, "title": 1, "description": 1, "source": 1, "url": 1})
+    results = collection.find({}, {"topic_id": 1, "title": 1, "description": 1, "source": 1, "url": 1})
     return list(results)
 
 
@@ -48,7 +56,7 @@ def fetch_redis_data():
 
 
 
-def get_user_profile(username):
+def get_user_profile(user):
     conn = mysql.connector.connect(
         host="localhost",
         user="emmanuel",
@@ -57,27 +65,25 @@ def get_user_profile(username):
     )
     cursor = conn.cursor(dictionary=True)
 
-    
-    cursor.execute("SELECT * FROM MyProject_student_profile WHERE username = %s", (username,))
+    # user is a Django User object; get profile by user.id
+    cursor.execute("SELECT * FROM MyProject_student_profile WHERE user_id = %s", (user.id,))
     result = cursor.fetchone()
 
     if not result:
         conn.close()
         return None
 
-    
     cursor.execute("""
-        SELECT topic_id FROM student_assessment
+        SELECT topic_id FROM MyProject_student_assessment
         WHERE username = %s AND score < 50
-    """, (username,))
+    """, (user.username,))
     weak_topics = [row['topic_id'] for row in cursor.fetchall()]
 
     conn.close()
 
     return {
-        "username": result["username"],
+        "username": user.username,
         "interests": json.loads(result["interests"]),
-        "fav_sources": json.loads(result["fav_sources"]),
         "weak_topics": weak_topics
     }
 
@@ -88,7 +94,7 @@ def get_user_profile(username):
 def format_data_for_gemini(resources):
     formatted = ""
     for item in resources:
-        formatted += f"\n Title: {item.get('title')}\n Description: {item.get('description')}\n🌍 Source: {item.get('source')}\n🔗 URL: {item.get('url')}\n---"
+        formatted += f"\n Title: {item.get('title')}\n Description: {item.get('description')}\n Source: {item.get('source')}\n URL: {item.get('url')}\n topic_id:{item.get('topic_id')}\n"
     return formatted
 
 
@@ -141,9 +147,9 @@ Materials:
             cursor = conn.cursor()
             for item in results:
                 cursor.execute("""
-                    INSERT INTO resources (title, description, source, url)
+                    INSERT INTO resources (title, description, source, url, topic_id)
                     VALUES (%s, %s, %s, %s)
-                """, (item['title'], item['description'], item['source'], item['url']))
+                """, (item['title'], item['description'], item['source'], item['url'], item['topic_id']))
             conn.commit()
             conn.close()
             print(" Saved filtered results to MySQL")
@@ -159,7 +165,8 @@ Materials:
                     "title": item['title'],
                     "description": item['description'],
                     "source": item['source'],
-                    "url": item['url']
+                    "url": item['url'],
+                    
                 })
             print(" Cached filtered results in Redis")
         except Exception as e:
@@ -170,39 +177,47 @@ Materials:
 
 
 
-def recommend_resources(user_profile):
-    print(f"\n Recommending for: {user_profile['username']} with interests: {', '.join(user_profile['interests'])}")
 
-    
+def recommend_resources(user):
+    user_profile = get_user_profile(user)
+    if not user_profile:
+        print("No user profile found.")
+        return {"error": "No user profile found."}
+
+    print(f"\n Recommending for: {user.username} with interests: {', '.join(user_profile['interests'])}")
+
+
     all_data = fetch_mysql_data() + fetch_mongo_data() + fetch_redis_data()
-    
     filtered_data = [
         item for item in all_data 
         if 'topic_id' in item and str(item['topic_id']) in map(str, user_profile['weak_topics'])
     ]
 
+
+    # If no filtered data, let Gemini generate new materials based on interests and fav_sources
     if not filtered_data:
-        print(" No relevant materials found for the student's weak topics.")
-        return {"error": "No materials to recommend."}
+        print("No relevant materials found for the student's weak topics. Using Gemini to generate new materials based on interests and sources.")
+        interests = ', '.join(user_profile['interests'])
+        prompt = f"""
+User '{user.username}' is interested in: {interests}.
+Generate 5 new learning materials (not from a provided list) as a JSON list. Each item should have title, description, source, and url. Base your recommendations on the user's interests and preferred sources: {', '.join(user_profile.get('fav_sources', []))}.
+"""
+    else:
+        formatted = format_data_for_gemini(filtered_data)
+        interests = ', '.join(user_profile['interests'])
+        prompt = f"""
+User '{user.username}' is interested in: {interests}
 
-    
-    formatted = format_data_for_gemini(filtered_data)
-    interests = ', '.join(user_profile['interests'])
-
-    prompt = f"""
-User '{user_profile['username']}' is interested in: {interests}
-
-Below are learning resources. Based on their interests and preferred sources ({', '.join(user_profile['fav_sources'])}), recommend 5 materials in JSON format.
+Below are learning resources. Based on their interests and preferred sources ({', '.join(user_profile.get('fav_sources', []))}), recommend 5 materials in JSON format.
 
 Materials:
 {formatted}
 """
 
-    
     results = call_gemini(prompt)
 
-    
     if isinstance(results, list):
+        # Save to MySQL (deduplicated)
         try:
             conn = mysql.connector.connect(
                 host="localhost",
@@ -211,20 +226,33 @@ Materials:
                 database="LearningSystem"
             )
             cursor = conn.cursor()
-
             for item in results:
                 cursor.execute("SELECT COUNT(*) FROM resources WHERE title = %s AND url = %s", (item['title'], item['url']))
                 if cursor.fetchone()[0] == 0:
                     cursor.execute("""
-                        INSERT INTO resources (title, description, source, url)
-                        VALUES (%s, %s, %s, %s)
-                    """, (item['title'], item['description'], item['source'], item['url']))
+                        INSERT INTO resources (title, description, source, url, topic_id)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (item['title'], item['description'], item['source'], item['url'], item['topic_id']))
             conn.commit()
             conn.close()
             print("  Saved to MySQL (deduplicated)")
         except Exception as e:
             print(f"  MySQL Save Error: {e}")
 
+        # Save to MongoDB
+        try:
+            client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+            db = client["LearningSystem"]
+            collection = db["recommended_materials"]
+            for item in results:
+                item_with_user = dict(item)
+                item_with_user["username"] = user.username
+                collection.insert_one(item_with_user)
+            print("  Saved recommended results to MongoDB")
+        except Exception as e:
+            print(f"  MongoDB Save Error: {e}")
+
+        # Save to Redis (deduplicated)
         try:
             r = redis.Redis(host='localhost', port=6379, db=0)
             for item in results:
@@ -234,7 +262,8 @@ Materials:
                         "title": item['title'],
                         "description": item['description'],
                         "source": item['source'],
-                        "url": item['url']
+                        "url": item['url'],
+                        
                     })
             print("  Cached in Redis (deduplicated)")
         except Exception as e:
@@ -257,19 +286,19 @@ if __name__ == "__main__":
         results = filter_resources(user_query)
 
     elif mode == "2":
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         username = input("Enter student username: ")
-        user_profile = get_user_profile(username)
-
-        if user_profile:
-            results = recommend_resources(user_profile)
-        else:
-            print(" Profile not found.")
+        try:
+            user = User.objects.get(username=username)
+        except Exception:
+            print("User not found.")
             exit()
+        results = recommend_resources(user)
     else:
         print(" Invalid choice")
         exit()
 
-    
     if isinstance(results, dict) and "error" in results:
         print(f"\n Error: {results['error']}")
     else:

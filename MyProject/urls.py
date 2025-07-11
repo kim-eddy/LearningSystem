@@ -1,4 +1,5 @@
 from django.urls import path
+from .generate_learning_path import generate_learning_path_view
 from .views import (
     index,
     course_list,
@@ -8,12 +9,15 @@ from .views import (
     student_progress,
     assessment_detail,
     project,
-    materials,
+    materials_view,
     signup_view,
     save_path,
     fetch_path,
     redis_get,
-    redis_save,       
+    redis_save,
+    Quiz_view,
+    learning_resources,
+    
 )
 urlpatterns = [
     path('', index, name='index'),
@@ -23,13 +27,16 @@ urlpatterns = [
     path('student/profile/', student_profile, name='student_profile'),
     path('student/progress/', student_progress, name='student_progress'),
     path('assessments/<int:assessment_id>/', assessment_detail, name='assessment_detail'),
+    path('assessments/ai/', assessment_detail, name='ai_assessment'),
     path('project/', project, name='project'),
-    path('materials/<int:material_id>/', materials, name='materials'),
+    path('materials_view/<int:material_id>/', materials_view, name='materials_view'),
     path('signup/', signup_view, name='signup'),
     path('save-path/', save_path,name='save_path'),
     path('fetch-path/', fetch_path,name='fetch_path'),
     path('redis/get/', redis_get),
     path('redis/save/', redis_save),
-    
+    path('quiz/', Quiz_view, name='quiz'),
+    path('learning-resources/', learning_resources, name='learning_resources'),
+    path('generate-learning-path/', generate_learning_path_view, name='generate_learning_path'),
 
 ]

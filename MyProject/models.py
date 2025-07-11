@@ -2,18 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
 
-class Student(models.Model):
-    email = models.EmailField(max_length=254, unique=True)
-    password = models.CharField(max_length=128)
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
-    username = models.CharField(max_length=150, unique=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-    school = models.CharField(max_length=100, blank=True, null=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-
-    def __str__(self):
-        return self.username
 class Grade(models.Model):
     name = models.CharField(max_length=55)
     
@@ -33,17 +21,23 @@ class Topic(models.Model):
         def __str__(self):
             return self.name
 class Assessment(models.Model):
-            course = models.ForeignKey(Course, on_delete=models.CASCADE)
-            question = models.TextField()
-            topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
-            answer = models.TextField()
-            def __str__(self):
-                return self.name
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    question = models.TextField()
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    answer = models.TextField()
+
+    def __str__(self):
+        return f"Assessment on {self.topic.name}"
+
+
 class Student_Profile(models.Model):
       user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
       grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
-      course = models.ForeignKey(Course, on_delete=models.CASCADE)
-      School = models.ForeignKey('School', on_delete=models.CASCADE, blank=True, null=True)
+      courses = models.ManyToManyField(Course, blank=True)
+      school = models.ForeignKey('School', on_delete=models.CASCADE, blank=True, null=True)
+      phone_number = models.CharField(max_length=15, blank=True)
+      email = models.EmailField(blank=True)
+      interests = models.JSONField(default=list, blank=True)  
       def __str__(self):
           return self.user.username
 class Materials(models.Model):
@@ -64,7 +58,7 @@ class Materials(models.Model):
 class Student_Progress(models.Model):
     student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, null=True, blank=True)
     completed = models.BooleanField(default=False)
     progress_percentage = models.FloatField(default=0.0)
     weak_areas = models.TextField(blank=True, null=True)
@@ -73,8 +67,8 @@ class Student_Progress(models.Model):
         unique_together = ('student', 'course', 'topic')
     
     def __str__(self):
-        return f"{self.student.user.username} - {self.course.title} - {self.topic.name}"                  
-    
+        return f"{self.student.user.username} - {self.course.title}" + (f" - {self.topic.name}" if self.topic else "")
+
 class Project(models.Model):
      title = models.CharField(max_length=100)
      description = models.TextField()
@@ -88,6 +82,7 @@ class Quize(models.Model):
     title = models.CharField(max_length=100)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    question = models.TextField(default="Sample question")
     student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     pass_score = models.FloatField(default=50.0)
@@ -120,4 +115,88 @@ class School(models.Model):
     def __str__(self):
         return self.name
      
-         
+class LearningGoal(models.Model):
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)  # e.g. "Full Stack Developer"
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.title}"
+
+class LearningPath(models.Model):
+    goal = models.ForeignKey(LearningGoal, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField()
+    status = models.CharField(
+        max_length=20,
+        choices=[('not_started', 'Not Started'), ('in_progress', 'In Progress'), ('completed', 'Completed')],
+        default='not_started'
+    )
+    recommended_by_ai = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order']
+        unique_together = ('goal', 'topic')
+
+    def __str__(self):
+        return f"{self.goal.title} - {self.topic.name}"
+class TopicAssessmentResult(models.Model):
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
+    score = models.FloatField()
+    taken_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.topic.name} - {self.score}"
+
+class PathFeedback(models.Model):
+    path = models.ForeignKey(LearningPath, on_delete=models.CASCADE)
+    feedback = models.TextField()
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class LearningPathTopic(models.Model):
+    path = models.ForeignKey(LearningPath, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    order = models.IntegerField()
+
+class Question(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, null=True)
+    question_text = models.TextField()
+    options = models.JSONField()  # List of strings
+    correct_answer = models.CharField(max_length=255)
+
+class StudentAssessmentAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    grade = models.CharField(max_length=50)
+    questions = models.ManyToManyField(Question)
+    submitted = models.BooleanField(default=False)
+    score = models.IntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class AI_Assessment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True, blank=True)
+    question = models.TextField()
+    options = models.JSONField(help_text="List of options in JSON format")
+    correct_answer = models.CharField(max_length=255)
+    selected_answer = models.CharField(max_length=255, null=True, blank=True)
+    is_correct = models.BooleanField(null=True)
+    generated_by_ai = models.BooleanField(default=True)
+    grade_level = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.selected_answer:
+            self.is_correct = (self.selected_answer == self.correct_answer)
+        super().save(*args, **kwargs)     
+
+class Enrollment(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
+    enrollment_date = models.DateTimeField(auto_now_add=True)       

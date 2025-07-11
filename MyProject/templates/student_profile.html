@@ -2,52 +2,210 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Profile - Learning System</title>
+    <title>Student Profile</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+        header {
+            background: #2a5298;
+            color: #fff;
+            padding: 1.5rem 0 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(42,82,152,0.08);
+        }
+        header nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        header nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        header nav a:hover {
+            color: #ffd700;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 2.1rem;
+            letter-spacing: 1px;
+        }
+        .profile, .courses, .progress {
+            margin: 2rem auto 2.5rem auto;
+            max-width: 700px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(42,82,152,0.08);
+            padding: 2rem 2.5rem;
+        }
+        .profile h2, .courses h2, .progress h2 {
+            color: #2a5298;
+            margin-top: 0;
+        }
+        .profile p, .courses p, .progress p {
+            font-size: 1.08rem;
+        }
+        form {
+            margin-top: 1.5rem;
+        }
+        label {
+            font-weight: 500;
+        }
+        input[type="text"], input[type="email"] {
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: 1px solid #bbb;
+            margin-bottom: 1rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        button[type="submit"] {
+            background: #2a5298;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 0.6rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button[type="submit"]:hover {
+            background: #1e3c72;
+        }
+        ul {
+            padding-left: 1.2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #f8faff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px 8px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background-color: #e3eafc;
+            color: #2a5298;
+        }
+        tr:nth-child(even) {
+            background: #f5f8fd;
+        }
+        footer {
+            background: #2a5298;
+            color: #fff;
+            text-align: center;
+            padding: 1rem 0;
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+        @media (max-width: 600px) {
+            .profile, .courses, .progress {
+                padding: 1rem 0.5rem;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
-        <h1>Student Profile</h1>
         <nav>
             <ul>
                 <li><a href="{% url 'index' %}">Home</a></li>
-                <li><a href="{% url 'course_list' %}">Courses</a></li>
-                <li><a href="{% url 'logout' %}">Logout</a></li>
             </ul>
         </nav>
     </header>
-    <main>
-        <h2>{{ student.username }}'s Profile</h2>
-        <p>Email: {{ student.email }}</p>
-        <p>Full Name: {{ student.first_name }} {{ student.last_name }}</p>
-        <p>Enrolled Courses:</p>
-        <p>grade:</p>
-        <ul>
-            {% for course in student.courses.all %}
-                <li>
-                    <a href="{% url 'course_detail' course.id %}">{{ course.name }}</a>
-                    <p>{{ course.description }}</p>
-                    <p>Instructor: {{ course.instructor.username }}</p>
-                    <p>Start Date: {{ course.start_date }}</p>
-                    <p>End Date: {{ course.end_date }}</p>
-                    <p>School: {{ course.school.name }}</p>
-                </li>
-            {% empty %}
-                <li>No courses enrolled.</li>
-            {% endfor %}
-        </ul>
-        <p>Assessments:</p>
-        <ul>
-            {% for assessment in student.assessments.all %}
-                <li>
-                    <a href="{% url 'assessment_detail' assessment.id %}">{{ assessment.name }}</a>
-                    <p>{{ assessment.description }}</p>
-                    <p>Course: {{ assessment.course.name }}</p>
-                    <p>Instructor: {{ assessment.instructor.username }}</p>
-                    <p>Start Date: {{ assessment.start_date }}</p>
-                    <p>End Date: {{ assessment.end_date }}</p>
-                </li>
-            {% empty %}
-                <li>No assessments available.</li>
-            {% endfor %}        
-</html>
+
+    <h1>Welcome, {{ student_profile.user.username }}</h1>
+
+    <div class="profile">
+        <h2>Profile Information</h2>
+        <p><strong>Grade:</strong> {{ student_profile.grade }}</p>
+        <p><strong>School:</strong> {{ student_profile.school.name }}</p>
+        <p><strong>Interests:</strong> {{ student_profile.interests }}</p>
+    </div>
+
+    <div class="profile">
+        <form method="POST">
+        {% csrf_token %}
+        <h2>Contact Info</h2>
+        <label for="phone_number">Phone Number:</label>
+        <input type="text" name="phone_number" id="phone_number" value="{{ student_profile.phone_number }}"><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" value="{{ student_profile.email }}"><br><br>
+
+        <label for="interests">Interests (comma-separated and use ""):</label>
+        <input type="text" name="interests" id="interests" value="{{ student_profile.interests }}"><br><br>
+
+        <button type="submit">Update Contact Info</button>
+        </form>
+    </div>
+
+    <div class="courses">
+        <h2>Enrolled Courses (Grade {{ student_profile.grade }})</h2>
+        {% if courses %}
+            <ul>
+                {% for course in courses %}
+                    <li>
+                        <a href="{% url 'course_detail' course.id %}">{{ course.name }}</a> -
+                        {{ course.description }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No courses found for your grade.</p>
+        {% endif %}
+    </div>
+
+    <div class="progress">
+        <h2>Your Learning Progress</h2>
+        {% if progress %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Topic</th>
+                        <th>Status</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in progress %}
+                        <tr>
+                            <td>{{ p.topic.name }}</td>
+                            <td>{{ p.status }}</td>
+                            <td>{{ p.last_updated|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No progress data found.</p>
+        {% endif %}
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Learning System. All rights reserved.</p>
+    </footer>
+

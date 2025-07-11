@@ -1,0 +1,21 @@
+<h2>Your Personalized Learning Path</h2>
+
+{% for topic in learning_path %}
+  <div class="card mb-3">
+    <div class="card-header">
+      <strong>Topic:</strong> {{ topic.topic }}
+    </div>
+    <div class="card-body">
+      <ul>
+        {% for res in topic.resources %}
+          <li>
+            <a href="{{ res.url }}" target="_blank">{{ res.title }}</a><br>
+            <small>{{ res.description|truncatewords:20 }}</small>
+          </li>
+        {% empty %}
+          <li>No resources found for this topic.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endfor %}

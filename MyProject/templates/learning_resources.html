@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .resources-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 16px rgba(42,82,152,0.08);
+        padding: 2rem 2.5rem;
+    }
+    h2 {
+        color: #2a5298;
+        margin-top: 0;
+        text-align: center;
+    }
+    ul.resource-list {
+        padding-left: 0;
+        list-style: none;
+    }
+    li.resource-item {
+        margin-bottom: 2.2rem;
+        background: #f8faff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(42,82,152,0.04);
+        padding: 1.2rem 1.5rem;
+        list-style: none;
+    }
+    .resource-title {
+        color: #2a5298;
+        font-size: 1.18rem;
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+    }
+    .resource-source {
+        color: #888;
+        font-size: 0.98rem;
+        margin-bottom: 0.5rem;
+    }
+    .resource-link {
+        color: #1e3c72;
+        text-decoration: none;
+        word-break: break-all;
+    }
+    .resource-link:hover {
+        text-decoration: underline;
+    }
+    .resource-desc {
+        margin-top: 0.5rem;
+        font-size: 1.05rem;
+    }
+    .no-resources {
+        text-align: center;
+        color: #c0392b;
+        font-size: 1.1rem;
+        margin-top: 2rem;
+    }
+    @media (max-width: 600px) {
+        .resources-container {
+            padding: 1rem 0.5rem;
+        }
+        h2 {
+            font-size: 1.3rem;
+        }
+    }
+</style>
+<div class="resources-container">
+    <h2>Learning Resources</h2>
+
+    {% if resources %}
+      <ul class="resource-list">
+        {% for res in resources %}
+          <li class="resource-item">
+            <div class="resource-title">{{ res.title }}</div>
+            <div class="resource-source">Source: {{ res.source }}</div>
+            <a class="resource-link" href="{{ res.url }}" target="_blank">{{ res.url }}</a>
+            <div class="resource-desc">{{ res.description }}</div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="no-resources">No resources found for you yet.</div>
+    {% endif %}
+</div>
+{% endblock %}
