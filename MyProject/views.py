@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from .forms import SignupForm, StudentProfileUpdateForm
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
+from collections import defaultdict
+from .models import Project, StudentProject, TopicProgress
 from .mongo_service import store_learning_path, get_learning_path
 from django.http import JsonResponse
 from .redis_service import save_student_session, get_student_session
@@ -24,8 +26,16 @@ from django.views.decorators.csrf import csrf_exempt
 from pymongo import MongoClient 
 import requests
 import markdown
-
+from .chatbot import gemini_chat
+from django.utils.html import escape
+from .ai_grading import ai_grade_project
+import json
 import logging
+
+
+
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +45,13 @@ logger = logging.getLogger(__name__)
 
 user = None  # Placeholder for user object, to be used in views where needed
 
+@csrf_exempt
+def gemini_chat_view(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        user_message = data.get("message")
+        reply = gemini_chat(user_message)
+        return JsonResponse({"response": reply})
 
 @login_required
 def index(request):
@@ -176,14 +193,15 @@ def assessment_detail(request, assessment_id=None):
         course = enrolled_progress.course
     else:
         course = Course.objects.filter(grade=grade).first()
-    topic = Topic.objects.filter(course=course).first() if course else None
     course_title = course.title if course else "General"
-    topic_name = topic.name if topic else "General"
+    topics = Topic.objects.filter(course=course)
 
     if request.method == 'POST':
         # Evaluate answers
-        # Fetch the latest 5 AI_Assessment questions for this user/course/topic/grade
-        ai_questions = AI_Assessment.objects.filter(user=user, course=course, topic=topic, grade_level=grade.id if hasattr(grade, 'id') else grade).order_by('-created_at')[:5][::-1]
+        # Fetch all AI_Assessment questions for this user/course/grade (all topics)
+        ai_questions = AI_Assessment.objects.filter(
+            user=user, course=course, grade_level=grade.id if hasattr(grade, 'id') else grade
+        ).order_by('-created_at')
         user_answers = []
         score = 0
         total = len(ai_questions)
@@ -229,78 +247,75 @@ def assessment_detail(request, assessment_id=None):
 
         return redirect('learning_path_view')
     else:
-        # Generate new quiz
-        prompt = f"""
-        You are an expert educational content generator. Create a 5-question multiple choice quiz for a grade {grade} student in the course '{course_title}' on the topic: '{topic_name if topic else 'any relevant topic'}'.
+        all_questions = []
+        for topic in topics:
+            topic_name = topic.name
+            prompt = f"""
+            You are an expert educational content generator. Create a 5-question multiple choice quiz for a grade {grade} student in the course '{course_title}' on the topic: '{topic_name}'.
 
-        For each question, strictly use the following format (one line per question):
-        question|option1,option2,option3,option4|correct_option
+            For each question, strictly use the following format (one line per question):
+            question|option1,option2,option3,option4|correct_option
 
-        - Each question must have exactly 4 options, separated by commas.
-        - The correct_option must exactly match one of the options.
-        - Do not number the questions or add any extra text or explanation.
-        - Only output the 5 lines, one for each question, in the format above.
-        - Example:
-        What is 2+2?|3,4,5,6|4
-        ...
-        """
-        try:
-            GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}]
-            }
-            response = requests.post(GEMINI_API_URL, json=payload)
-            response.raise_for_status()
+            - Each question must have exactly 4 options, separated by commas.
+            - The correct_option must exactly match one of the options.
+            - Do not number the questions or add any extra text or explanation.
+            - Only output the 5 lines, one for each question, in the format above.
+            - Example:
+            What is 2+2?|3,4,5,6|4
+            ...
+            """
+            try:
+                GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}]
+                }
+                response = requests.post(GEMINI_API_URL, json=payload)
+                response.raise_for_status()
 
-            generated = response.json()['candidates'][0]['content']['parts'][0]['text']
+                generated = response.json()['candidates'][0]['content']['parts'][0]['text']
 
-            questions = []
-            for line in generated.strip().split('\n'):
-                if '|' in line:
-                    parts = line.split('|')
-                    if len(parts) == 3:
-                        q, opts, correct = parts
-                        options = [o.strip() for o in opts.split(',')]
-                        question_text = q.strip()
-                        correct_answer = correct.strip()
+                for line in generated.strip().split('\n'):
+                    if '|' in line:
+                        parts = line.split('|')
+                        if len(parts) == 3:
+                            q, opts, correct = parts
+                            options = [o.strip() for o in opts.split(',')]
+                            question_text = q.strip()
+                            correct_answer = correct.strip()
 
-                        # Save to DB
-                        AI_Assessment.objects.create(
-                            user=user,
-                            course=course,
-                            topic=topic,
-                            question=question_text,
-                            options=options,
-                            correct_answer=correct_answer,
-                            grade_level=grade.id if hasattr(grade, 'id') else grade,
-                        )
+                            # Save to DB
+                            AI_Assessment.objects.create(
+                                user=user,
+                                course=course,
+                                topic=topic,
+                                question=question_text,
+                                options=options,
+                                correct_answer=correct_answer,
+                                grade_level=grade.id if hasattr(grade, 'id') else grade,
+                            )
 
-                        questions.append({
-                            "question": question_text,
-                            "options": options,
-                            "correct": correct_answer,
-                            "course": course_title,
-                            "topic": topic_name
-                        })
-                    else:
-                        logger.warning(f"Skipping malformed line in Gemini output: {line}")
+                            all_questions.append({
+                                "question": question_text,
+                                "options": options,
+                                "correct": correct_answer,
+                                "course": course_title,
+                                "topic": topic_name
+                            })
+                        else:
+                            logger.warning(f"Skipping malformed line in Gemini output: {line}")
+            except Exception as e:
+                logger.error(f"Gemini API Error for topic {topic_name}: {e}")
 
-            return render(request, 'assessment_detail.html', {
-                'assessment': None,
-                'auto_questions': questions,
-                'grade': grade,
-                'course': course,
-                'topic': topic
-            })
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Gemini API Error: {e}")
-            return HttpResponse(f"Gemini API failed: {str(e)}", status=500)
-        except KeyError as e:
-            logger.error(f"Gemini parsing error: {e}")
-            return HttpResponse("Failed to parse Gemini response.", status=500)
+        return render(request, 'assessment_detail.html', {
+            'assessment': None,
+            'auto_questions': all_questions,
+            'grade': grade,
+            'course': course,
+            'topics': topics
+        })
 
 @login_required
-def project(request):
+def submit_assessment(request):
     score = 0
     if request.method == 'POST':
         answers = request.POST.getlist('answers')
@@ -532,17 +547,28 @@ def learning_path_view(request):
 @login_required
 def learning_resources(request):
     user = request.user
+    selected_course = request.GET.get('course')  # ✅ match the template
+    selected_topic = request.GET.get('topic')    # ✅ needed for filtering
 
     # Connect to MongoDB
     client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
     db = client["LearningSystem"]
-    collection = db["scraped_content"]  
+    collection = db["scraped_content"]
 
-    # Ensure type matches what was stored
+    # Get all resources for the logged-in user
     resources = list(collection.find({"user_id": int(user.id)}))
 
+    # Group resources by course → topic
+    grouped_resources = {}
+    for res in resources:
+        course = res.get("course", "Unknown Course")
+        topic = res.get("topic", "Unknown Topic")
+        grouped_resources.setdefault(course, {}).setdefault(topic, []).append(res)
+
     return render(request, 'learning_resources.html', {
-        "resources": resources
+        "grouped_resources": grouped_resources,
+        "selected_course": selected_course,     # ✅ pass to template
+        "selected_topic": selected_topic        # ✅ pass to template
     })
 
 def study_topic_view(request, topic_id):
@@ -605,7 +631,7 @@ def mark_topic_completed(request, topic_id):
     progress.progress_percentage = 100.0
     progress.last_accessed = timezone.now()
     progress.save()
-
+    update_course_progress(student, topic.course)
     return redirect('study_topic', topic_id=topic_id)
 
 
@@ -616,11 +642,93 @@ def update_progress(request, topic_id):
         topic = Topic.objects.get(id=topic_id)
 
         progress, _ = TopicProgress.objects.get_or_create(student=student, topic=topic)
-        
-        # Increment progress by 25%, max 100%
         progress.progress_percentage = min(progress.progress_percentage + 25.0, 100.0)
         progress.save()
+        update_course_progress(student, topic.course)
+
+
+
+        # If progress is now 100%, assign a project
+        if progress.progress_percentage >= 100.0:
+            # Assign a project for the course if not already assigned
+            project = Project.objects.filter(course=topic.course).first()
+            if project:
+                StudentProject.objects.get_or_create(student=student, project=project)
 
         return JsonResponse({"progress": progress.progress_percentage})
     return JsonResponse({"error": "Invalid request"}, status=400)
 
+
+@login_required
+def project_view(request):
+    student = Student_Profile.objects.get(user=request.user)
+    enrolled_courses = student.enrolled_courses.all()
+
+    # Get one project per course (or however many you prefer)
+    projects = Project.objects.filter(course__in=enrolled_courses)
+
+    student_projects = StudentProject.objects.filter(student=student)
+    submitted_ids = [sp.project.id for sp in student_projects if sp.is_submitted]
+
+    return render(request, 'project_assignment.html', {
+        "projects": projects,
+        "submitted_ids": submitted_ids
+    })
+
+@login_required
+def submit_project(request, project_id):
+    if request.method == 'POST':
+        student = get_object_or_404(Student_Profile, user=request.user)
+        project = get_object_or_404(Project, id=project_id)
+        uploaded_file = request.FILES.get('project_file')
+
+        if not uploaded_file:
+            return HttpResponse("Please upload a file.", status=400)
+
+        # Prevent duplicate submissions
+        if StudentProject.objects.filter(student=student, project=project, is_submitted=True).exists():
+            return HttpResponse("You have already submitted this project.", status=400)
+
+        # Save submission
+        student_project, created = StudentProject.objects.get_or_create(
+            student=student,
+            project=project
+        )
+        student_project.file = uploaded_file
+        student_project.is_submitted = True
+        student_project.save()
+
+        #  Trigger AI grading
+        ai_grade_project(student_project)
+
+        return redirect('project_detail', project_id=project.id)
+
+    return HttpResponse("Invalid request method.", status=405)
+def update_course_progress(student, course):
+    from .models import Topic, TopicProgress, Student_Progress
+
+    all_topics = Topic.objects.filter(course=course)
+    completed_topics = TopicProgress.objects.filter(
+        student=student,
+        topic__in=all_topics,  
+        progress_percentage__gte=100.0
+    ).count()
+
+    total_topics = all_topics.count()
+    percentage = round((completed_topics / total_topics) * 100.0, 2) if total_topics else 0.0
+
+    # Handle duplicate Student_Progress entries (if any)
+    student_progress_qs = Student_Progress.objects.filter(student=student, course=course)
+    if student_progress_qs.count() > 1:
+        # Keep the first, delete the rest
+        first = student_progress_qs.first()
+        student_progress_qs.exclude(id=first.id).delete()
+        student_progress = first
+    elif student_progress_qs.exists():
+        student_progress = student_progress_qs.first()
+    else:
+        student_progress = Student_Progress(student=student, course=course)
+
+    student_progress.progress_percentage = percentage
+    student_progress.completed = (percentage == 100.0)
+    student_progress.save()

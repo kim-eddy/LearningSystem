@@ -64,7 +64,7 @@ class Student_Progress(models.Model):
     weak_areas = models.TextField(blank=True, null=True)
 
     class Meta:
-        unique_together = ('student', 'course', 'topic')
+        unique_together = ('student', 'course')
     
     def __str__(self):
         return f"{self.student.user.username} - {self.course.title}" + (f" - {self.topic.name}" if self.topic else "")
@@ -214,3 +214,16 @@ class TopicProgress(models.Model):
 
     def __str__(self):
         return f"{self.student.user.username} - {self.topic.name} - {self.progress_percentage}%"      
+    
+
+class StudentProject(models.Model):
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
+    feedback = models.TextField(blank=True, null=True)
+    file = models.FileField(upload_to='student_projects/', blank=True, null=True)
+    is_submitted = models.BooleanField(default=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    submission_date = models.DateTimeField(auto_now_add=True)
+    grade = models.CharField(max_length=10, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.project.title}"

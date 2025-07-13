@@ -2,85 +2,217 @@
 
 {% block content %}
 <style>
-    .resources-container {
-        max-width: 800px;
-        margin: 2rem auto;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 16px rgba(42,82,152,0.08);
-        padding: 2rem 2.5rem;
+    body {
+        background: #f4f6fb;
+        margin: 0;
+        font-family: Arial, sans-serif;
     }
-    h2 {
+    header {
+            background: #2a5298;
+            color: #fff;
+            padding: 2rem 0 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(42,82,152,0.08);
+        }
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        nav a:hover {
+            color: #ffd700;
+        }
+    .sidebar {
+        width: 270px;
+        background: #f8fafc;
+        border-right: 1px solid #e0e0e0;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        overflow-y: auto;
+        transition: left 0.3s;
+        z-index: 40;
+    }
+    .sidebar-header {
+        padding: 1.2rem 1.5rem 1rem 1.5rem;
+        background: #2a5298;
+        color: #fff;
+        font-size: 1.3rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .sidebar-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .accordion {
+        width: 100%;
+        background: none;
+        border: none;
+        text-align: left;
+        padding: 1rem 1.5rem;
+        font-size: 1.08rem;
+        font-weight: 600;
         color: #2a5298;
-        margin-top: 0;
-        text-align: center;
+        cursor: pointer;
+        border-top: 1px solid #e0e0e0;
     }
-    ul.resource-list {
-        padding-left: 0;
-        list-style: none;
+    .accordion:hover {
+        background: #e6f0fa;
     }
-    li.resource-item {
-        margin-bottom: 2.2rem;
-        background: #f8faff;
+    .panel {
+        padding-left: 1.5rem;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        background: #f4f6fb;
+    }
+    .panel a {
+        display: block;
+        padding: 0.6rem 0;
+        color: #1a3c6b;
+        text-decoration: none;
+        font-size: 1rem;
+    }
+    .panel a:hover, .panel a.selected {
+        font-weight: bold;
+        color: #2a5298;
+    }
+    .main-content {
+        margin-left: 270px;
+        padding: 2rem;
+    }
+    .resource-card {
+        background: #fff;
         border-radius: 8px;
-        box-shadow: 0 1px 4px rgba(42,82,152,0.04);
-        padding: 1.2rem 1.5rem;
-        list-style: none;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #2a5298;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .resource-title {
+        font-size: 1.2rem;
         color: #2a5298;
-        font-size: 1.18rem;
-        font-weight: 600;
-        margin-bottom: 0.2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
     }
     .resource-source {
-        color: #888;
-        font-size: 0.98rem;
+        font-size: 0.9rem;
+        color: #555;
         margin-bottom: 0.5rem;
     }
     .resource-link {
-        color: #1e3c72;
-        text-decoration: none;
-        word-break: break-all;
-    }
-    .resource-link:hover {
+        color: #00704a;
         text-decoration: underline;
+        font-weight: 500;
     }
     .resource-desc {
-        margin-top: 0.5rem;
-        font-size: 1.05rem;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #222;
+        margin-top: 0.8rem;
     }
     .no-resources {
-        text-align: center;
         color: #c0392b;
         font-size: 1.1rem;
+        text-align: center;
         margin-top: 2rem;
     }
-    @media (max-width: 600px) {
-        .resources-container {
-            padding: 1rem 0.5rem;
-        }
-        h2 {
-            font-size: 1.3rem;
-        }
-    }
 </style>
-<div class="resources-container">
-    <h2>Learning Resources</h2>
 
-    {% if resources %}
-      <ul class="resource-list">
-        {% for res in resources %}
-          <li class="resource-item">
-            <div class="resource-title">{{ res.title }}</div>
-            <div class="resource-source">Source: {{ res.source }}</div>
-            <a class="resource-link" href="{{ res.url }}" target="_blank">{{ res.url }}</a>
-            <div class="resource-desc">{{ res.description }}</div>
-          </li>
+<header>
+        <nav>
+            <ul>
+                 <li><a href="{% url 'course_list' %}">Courses</a></li>
+                 <li><a href="{%url 'student_profile' %}">Profile</a></li>
+            </ul>
+        </nav>
+    </header>
+
+{% load custom_tags %}
+
+<div class="sidebar">
+    <div class="sidebar-header">Courses</div>
+    <ul class="sidebar-list">
+        {% for course, topics in grouped_resources.items %}
+            <li>
+                <button class="accordion">{{ course }}</button>
+                <div class="panel">
+                    {% for topic in topics.keys %}
+                        <a href="?course={{ course|urlencode }}&topic={{ topic|urlencode }}"
+                           class="{% if topic == selected_topic and course == selected_course %}selected{% endif %}">
+                            {{ topic }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </li>
         {% endfor %}
-      </ul>
+    </ul>
+</div>
+
+<div class="main-content">
+    <h2>Learning Resources</h2>
+    {% if selected_course and selected_topic %}
+        <h3>{{ selected_course }} → {{ selected_topic }}</h3>
+        {% with topics=grouped_resources|get:selected_course %}
+            {% with res_list=topics|get:selected_topic %}
+                {% if res_list %}
+                    {% for res in res_list %}
+                        <div class="resource-card">
+                            <div class="resource-title">{{ res.title|default_if_none:res.topic }}</div>
+                            <div class="resource-source"><strong>Source:</strong> {{ res.source|default:"Unknown" }}</div>
+                            <div class="resource-desc">{{ res.description|safe }}</div>
+
+
+                            {% if res.url %}
+                                <a class="resource-link" href="{{ res.url }}" target="_blank">Visit Source</a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-resources">No resources found for this topic.</div>
+                {% endif %}
+            {% endwith %}
+        {% endwith %}
+    {% elif selected_course %}
+        <div class="no-resources">Select a topic to view resources.</div>
     {% else %}
-      <div class="no-resources">No resources found for you yet.</div>
+        <div class="no-resources">Select a course and topic to view resources.</div>
     {% endif %}
 </div>
+
+<script>
+    const acc = document.getElementsByClassName("accordion");
+    for (let i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            const panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        });
+    }
+</script>
 {% endblock %}

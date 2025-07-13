@@ -2,44 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Smart Learning Assistant{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Bootstrap CSS (optional, for responsiveness) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    {% block extra_head %}{% endblock %}
+    <title>Learning Resources</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #f1f1f1;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid #ccc;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3, .sidebar h4 {
+            margin: 0;
+            padding: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .sidebar h4 {
+            margin-left: 15px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .topic-block {
+            margin-bottom: 40px;
+        }
+
+        .resource-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .resource-source {
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .resource-desc {
+            margin-top: 15px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+            white-space: pre-wrap;
+        }
+
+        .resource-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #2196F3;
+        }
+
+        code {
+            background-color: #eee;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="{% url 'index' %}">Smart Learn</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                {% if user.is_authenticated %}
-                    <li class="nav-item"><a class="nav-link" href="{% url 'student_profile' %}">Profile</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'course_list' %}">Courses</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'student_progress' %}">Progress</a></li>
-                    
-                    <li class="nav-item"><a class="nav-link" href="{% url 'learning_resources' %}">Resources</a></li>
-                    
-                {% else %}
-                    <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <div class="container mt-4">
-        {% block content %}
-        <!-- Child templates inject content here -->
-        {% endblock %}
+    <div class="sidebar">
+        <h2>Courses</h2>
+        {% for course, topics in grouped_resources.items %}
+            <h3>{{ course }}</h3>
+            {% for topic, _ in topics.items %}
+                <h4>• {{ topic }}</h4>
+            {% endfor %}
+        {% endfor %}
     </div>
 
-    <!-- Bootstrap JS (optional) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    {% block extra_scripts %}{% endblock %}
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+   {% include "chat.html" %}
 </body>
 </html>

@@ -1,0 +1,21 @@
+<h2>Your Assigned Projects</h2>
+{% for project in projects %}
+  <div class="card">
+    <h3>{{ project.title }} ({{ project.course.title }})</h3>
+    <p>{{ project.description }}</p>
+    <p><strong>Difficulty:</strong> {{ project.difficulty }}</p>
+    <p><strong>Resources:</strong> {{ project.resources }}</p>
+
+    {% if project.id in submitted_ids %}
+      <p style="color: green;"> Submitted</p>
+    {% else %}
+      <form method="post" enctype="multipart/form-data" action="{% url 'submit_project' project.id %}">
+        {% csrf_token %}
+        <input type="file" name="file" required>
+        <button type="submit">Submit Project</button>
+      </form>
+    {% endif %}
+  </div>
+{% empty %}
+  <p>No projects assigned yet.</p>
+{% endfor %}

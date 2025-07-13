@@ -106,18 +106,8 @@
         tr:nth-child(even) {
             background: #f5f8fd;
         }
-        footer {
-            background: #2a5298;
-            color: #fff;
-            text-align: center;
-            padding: 1rem 0;
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-        }
+        
+        
         @media (max-width: 600px) {
             .profile, .courses, .progress {
                 padding: 1rem 0.5rem;
@@ -143,7 +133,6 @@
         <h2>Profile Information</h2>
         <p><strong>Grade:</strong> {{ student_profile.grade }}</p>
         <p><strong>School:</strong> {{ student_profile.school.name }}</p>
-        <p><strong>Interests:</strong> {{ student_profile.interests }}</p>
     </div>
 
     <div class="profile">
@@ -156,8 +145,7 @@
         <label for="email">Email:</label>
         <input type="email" name="email" id="email" value="{{ student_profile.email }}"><br><br>
 
-        <label for="interests">Interests (comma-separated and use ""):</label>
-        <input type="text" name="interests" id="interests" value="{{ student_profile.interests }}"><br><br>
+        
 
         <button type="submit">Update Contact Info</button>
         </form>
@@ -205,7 +193,4 @@
         {% endif %}
     </div>
 
-    <footer>
-        <p>&copy; 2025 Learning System. All rights reserved.</p>
-    </footer>
-
+    

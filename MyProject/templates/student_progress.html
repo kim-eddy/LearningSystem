@@ -55,12 +55,18 @@
         box-shadow: 0 2px 16px rgba(42,82,152,0.08);
         max-width: 700px;
     }
-    .progress-bar {
+    .progress-bar-container {
+        width: 100%;
         background: #e0e0e0;
-        border-radius: 5px;
-        overflow: hidden;
-        height: 20px;
-        margin-top: 5px;
+        border-radius: 8px;
+        height: 18px;
+        margin-bottom: 10px;
+    }
+    .progress-bar {
+        height: 100%;
+        background: #2a5298;
+        border-radius: 8px;
+        transition: width 0.3s;
     }
     .progress-bar-fill {
         background: linear-gradient(90deg, #2a5298 0%, #4caf50 100%);
@@ -107,6 +113,7 @@
         <nav>
             <ul>
                 <li><a href="{% url 'student_profile' %}">Profile</a></li>
+                <li><a href="{% url 'learning_path_view' %}">Learning Path</a></li>
             </ul>
         </nav>
     </header>
@@ -116,7 +123,6 @@
     {% for item in progress %}
         <div class="progress-container">
             <strong>Course:</strong> {{ item.course.title }}<br>
-            <strong>Topic:</strong> {{ item.topic.name }}<br>
             <strong>Completed:</strong> {{ item.completed|yesno:"Yes,No" }}<br>
             <strong>Progress:</strong>
             <div class="progress-bar">
@@ -127,14 +133,13 @@
             {% if item.weak_areas %}
                 <p class="weak-areas"><strong>Weak Areas:</strong> {{ item.weak_areas }}</p>
             {% endif %}
+            <a href="#" class="updateProgressBtn" data-topic-id="{{ item.topic.id }}">Update Progress</a>
         </div>
     {% empty %}
         <p style="text-align:center;">You have no recorded progress yet.</p>
     {% endfor %}
-</body>
-<footer>
-        <p>&copy; 2023 Learning System. All rights reserved.</p>
-    </footer>
-
+    <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar" style="width: {{ progress.progress_percentage|default:0 }}%"></div>
+    </div>
 </body>
 </html>

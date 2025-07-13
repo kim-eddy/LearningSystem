@@ -1,5 +1,7 @@
 from django.urls import path
 from .generate_learning_path import generate_learning_path_view
+from .ai_grading import ai_grade_project
+from .tests import test_grade_project
 
 from .views import (
     index,
@@ -9,7 +11,7 @@ from .views import (
     student_profile,
     student_progress,
     assessment_detail,
-    project,
+    submit_assessment,
     materials_view,
     signup_view,
     save_path,
@@ -21,7 +23,9 @@ from .views import (
     learning_path_view,
     study_topic_view,
     mark_topic_completed,
-    update_progress
+    update_progress,
+    project_view,
+    gemini_chat_view
 
 )
 urlpatterns = [
@@ -33,7 +37,7 @@ urlpatterns = [
     path('student/progress/', student_progress, name='student_progress'),
     path('assessments/<int:assessment_id>/', assessment_detail, name='assessment_detail'),
     path('assessments/ai/', assessment_detail, name='ai_assessment'),
-    path('project/', project, name='project'),
+    path('submit_assessment/', submit_assessment, name='submit_assessment'),
     path('materials_view/<int:material_id>/', materials_view, name='materials_view'),
     path('signup/', signup_view, name='signup'),
     path('save-path/', save_path,name='save_path'),
@@ -48,6 +52,10 @@ urlpatterns = [
     path('study-topic/<int:topic_id>/progress/', update_progress, name='update_progress'),
     path('study-topic/<int:topic_id>/resources/', study_topic_view, name='study_topic_resources'),
     path('study/topic/<int:topic_id>/complete/', mark_topic_completed, name='mark_topic_completed'),
+    path('project/<int:project_id>/', project_view, name='project_view'),
+    path('test/grade/<int:submission_id>/', test_grade_project, name='test_grade_project'),
+    path('gemini-chat/', gemini_chat_view, name='gemini_chat'),
+
 
 
 ]

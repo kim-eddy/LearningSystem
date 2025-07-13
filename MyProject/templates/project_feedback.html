@@ -1,0 +1,20 @@
+
+---
+
+### 3. **Template View for Project Feedback**
+
+```html
+<h2>Project: {{ project.title }}</h2>
+
+{% if submission.is_submitted %}
+  <p><strong>Grade:</strong> {{ submission.grade }}</p>
+  <p><strong>Feedback:</strong> {{ submission.feedback }}</p>
+  <a href="{{ submission.file.url }}" download>Download Submission</a>
+{% else %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label>Upload Project:</label>
+    <input type="file" name="file" required>
+    <button class="btn btn-success">Submit Project</button>
+  </form>
+{% endif %}

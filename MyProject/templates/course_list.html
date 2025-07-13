@@ -90,18 +90,7 @@
         button[type="submit"]:hover {
             background: #1e3c72;
         }
-        footer {
-            background: #2a5298;
-            color: #fff;
-            text-align: center;
-            padding: 1rem 0;
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-        }
+        
         @media (max-width: 600px) {
             main {
                 padding: 1rem 0.5rem;
@@ -137,6 +126,7 @@
                         <a href="{% url 'course_detail' course.id %}" style="color: #2a5298; text-decoration: none; font-weight: 500; font-size: 1rem; display: block; padding: 0.3rem 0.5rem; border-radius: 5px; transition: background 0.2s;">
                             {{ course.name }}
                         </a>
+                        <p style="margin: 0; font-size: 0.9rem; color: #555;">{{ course.description|truncatewords:15 }}</p>
                     </li>
                 {% empty %}
                     <li style="color: #888;">No courses</li>
@@ -152,12 +142,12 @@
                     <li class="course-item">
                         <strong><a href="{% url 'course_detail' course.id %}">{{ course.name }}</a></strong>
                         <p>{{ course.description }}</p>
-                        <p>Instructor: {{ course.instructor.username }}</p>
-                        <p>Start Date: {{ course.start_date }}</p>
-                        <p>End Date: {{ course.end_date }}</p>
-                        <p>School: {{ course.school.name }}</p>
+                        
+                        
+                        
+                        
 
-                        {% if course.id in enrolled_course_ids %}
+                        {% if course.id in enrolled_course_id %}
                             <p class="enrolled">Already Enrolled</p>
                         {% else %}
                             <form method="post" style="margin-top: 10px;">
@@ -174,8 +164,6 @@
         </section>
     </main>
 
-    <footer>
-        <p>&copy; 2025 Learning System. All rights reserved.</p>
-    </footer>
+   
 </body> 
 </html>
