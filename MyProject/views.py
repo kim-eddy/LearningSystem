@@ -53,7 +53,7 @@ def gemini_chat_view(request):
         reply = gemini_chat(user_message)
         return JsonResponse({"response": reply})
 
-@login_required
+
 def index(request):
     
     return render(request, 'index.html')
