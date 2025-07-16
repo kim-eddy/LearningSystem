@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">    
+    <head>  
+        <meta charset="UTF-8">  
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Leaderboard - Learning System</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: #f4f6fb;
+                margin: 0;
+                padding: 0;
+                color: #222;
+            }
+            header {
+            background: #2a5298;
+            color: #fff;
+            padding: 1.5rem 0 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(42,82,152,0.08);
+        }
+        header nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        header nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        header nav a:hover {
+            color: #ffd700;
+        }       
+            .container {
+                max-width: 800px;
+                margin: 2rem auto;
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 16px rgba(42,82,152,0.08);
+                padding: 2rem 2.5rem;
+            }
+            h1 {
+                color: #2a5298;
+                margin-top: 0;
+                font-size: 2.2rem;
+                letter-spacing: 1px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1.5rem;
+            }
+            th, td {
+                padding: 0.8rem;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+            th {
+                background: #2a5298;
+                color: #fff;
+            }
+            tr:hover {
+                background: #f1f1f1;
+            }
+            @media (max-width: 600px) {
+                table, th, td {
+                    display: block;
+                    width: 100%;
+                }
+                th {
+                    text-align: center;
+                }
+                td {
+                    text-align: left;
+                    padding-left: 50%;
+                    position: relative;
+                }
+                td::before {
+                    content: attr(data-label);
+                    position: absolute;
+                    left: 0;
+                    width: 50%;
+                    padding-left: 0.5rem;
+                    font-weight: bold;
+                    color: #555;
+                }
+            }
+        </style>    
+        
+    </head>
+</html>
+<header>
+    <nav>
+        <ul>
+            <li><a href="{% url 'index' %}">Home</a></li>
+            <li><a href="{% url 'course_list' %}">Courses</a></li>
+            <li><a href="{% url 'student_profile' %}">Profile</a></li>
+            <li><a href="{% url 'learning_path_view' %}">Learning Path</a></li>
+            
+        </ul>
+    </nav>
+</header>
+<h2 class="text-xl font-bold">Top Learners</h2>
+<table>
+  <tr><th>Rank</th><th>Name</th><th>Points</th></tr>
+  {% for entry in leaderboard %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ entry.student.user.username }}</td>
+      <td>{{ entry.points }}</td>
+    </tr>
+  {% endfor %}
+
+<h3>Badges Earned</h3>
+<div class="flex gap-4">
+  {% for sb in badges %}
+    <div class="text-center">
+      <img src="{{ sb.badge.icon.url }}" class="h-12" alt="{{ sb.badge.name }}">
+      <p>{{ sb.badge.name }}</p>
+    </div>
+  {% empty %}
+    <p>No badges yet. Keep learning!</p>
+  {% endfor %}
+</div>
+
+     
+  

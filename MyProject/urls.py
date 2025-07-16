@@ -25,7 +25,8 @@ from .views import (
     mark_topic_completed,
     update_progress,
     project_view,
-    gemini_chat_view
+    gemini_chat_view,
+    leaderboard_view
 
 )
 urlpatterns = [
@@ -55,6 +56,7 @@ urlpatterns = [
     path('project/<int:project_id>/', project_view, name='project_view'),
     path('test/grade/<int:submission_id>/', test_grade_project, name='test_grade_project'),
     path('gemini-chat/', gemini_chat_view, name='gemini_chat'),
+    path('leaderboard/', leaderboard_view, name='leaderboard'),
 
 
 

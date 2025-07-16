@@ -2,217 +2,355 @@
 
 {% block content %}
 <style>
-    body {
-        background: #f4f6fb;
-        margin: 0;
-        font-family: Arial, sans-serif;
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+  body {
+    background: #f9fafb;
+    margin: 0;
+    font-family: 'Inter', Arial, sans-serif;
+    color: #333;
+  }
+
+  header {
+    background: #2a5298;
+    color: #fff;
+    padding: 1.5rem 0 1rem 0;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(42,82,152,0.15);
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 1.8rem;
+  }
+
+  nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+  }
+
+  nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  nav a:hover {
+    color: #ffd700;
+    background: rgba(255, 215, 0, 0.15);
+  }
+
+  .container {
+    display: flex;
+    max-width: 1200px;
+    margin: 2rem auto;
+    gap: 2rem;
+    padding: 0 1rem;
+  }
+
+  .sidebar {
+    flex: 0 0 280px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 1rem 0;
+    position: sticky;
+    top: 1rem;
+    height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 1rem 1.5rem;
+    background: #2a5298;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+  }
+
+  .sidebar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .accordion {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2a5298;
+    cursor: pointer;
+    border-top: 1px solid #e0e0e0;
+    transition: background-color 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+  }
+
+  .accordion:hover, .accordion.active {
+    background: #e6f0fa;
+    box-shadow: inset 3px 0 0 #2a5298;
+  }
+
+  .accordion::after {
+    content: '+';
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #2a5298;
+    transition: transform 0.3s ease;
+  }
+
+  .accordion.active::after {
+    content: '-';
+    transform: rotate(180deg);
+  }
+
+  .panel {
+    padding-left: 1.5rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: #f9fbfd;
+    border-left: 3px solid #2a5298;
+  }
+
+  .panel a {
+    display: block;
+    padding: 0.6rem 0;
+    color: #1a3c6b;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .panel a:hover, .panel a.selected {
+    font-weight: 700;
+    color: #2a5298;
+    background: #dbe9fb;
+  }
+
+  .main-content {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 2rem 3rem;
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .main-content h2 {
+    font-weight: 700;
+    color: #2a5298;
+    margin-bottom: 1rem;
+    font-size: 2rem;
+    border-bottom: 3px solid #2a5298;
+    padding-bottom: 0.3rem;
+  }
+
+  .main-content h3 {
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+  }
+
+  .resource-card {
+    background: #fefefe;
+    border-radius: 10px;
+    padding: 1.8rem 2rem;
+    margin-bottom: 1.8rem;
+    border-left: 6px solid #2a5298;
+    box-shadow: 0 6px 12px rgba(42,82,152,0.1);
+    transition: box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .resource-card:hover {
+    box-shadow: 0 10px 20px rgba(42,82,152,0.2);
+  }
+
+  .resource-title {
+    font-size: 1.4rem;
+    color: #2a5298;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+
+  .resource-source {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 0.8rem;
+    font-style: italic;
+  }
+
+  .resource-link {
+    color: #00704a;
+    text-decoration: underline;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+
+  .resource-link:hover {
+    color: #004d2e;
+  }
+
+  .resource-desc {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #333;
+    margin-top: 1rem;
+  }
+
+  .no-resources {
+    color: #c0392b;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-top: 3rem;
+    font-weight: 600;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .container {
+      flex-direction: column;
+      margin: 1rem;
     }
-    header {
-            background: #2a5298;
-            color: #fff;
-            padding: 2rem 0 1rem 0;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(42,82,152,0.08);
-        }
-        header h1 {
-            margin: 0 0 0.5rem 0;
-            font-size: 2.5rem;
-            letter-spacing: 1px;
-        }
-        nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-        }
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 1.1rem;
-            transition: color 0.2s;
-        }
-        nav a:hover {
-            color: #ffd700;
-        }
     .sidebar {
-        width: 270px;
-        background: #f8fafc;
-        border-right: 1px solid #e0e0e0;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        overflow-y: auto;
-        transition: left 0.3s;
-        z-index: 40;
-    }
-    .sidebar-header {
-        padding: 1.2rem 1.5rem 1rem 1.5rem;
-        background: #2a5298;
-        color: #fff;
-        font-size: 1.3rem;
-        font-weight: bold;
-        letter-spacing: 1px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .sidebar-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    .accordion {
-        width: 100%;
-        background: none;
-        border: none;
-        text-align: left;
-        padding: 1rem 1.5rem;
-        font-size: 1.08rem;
-        font-weight: 600;
-        color: #2a5298;
-        cursor: pointer;
-        border-top: 1px solid #e0e0e0;
-    }
-    .accordion:hover {
-        background: #e6f0fa;
-    }
-    .panel {
-        padding-left: 1.5rem;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.2s ease-out;
-        background: #f4f6fb;
-    }
-    .panel a {
-        display: block;
-        padding: 0.6rem 0;
-        color: #1a3c6b;
-        text-decoration: none;
-        font-size: 1rem;
-    }
-    .panel a:hover, .panel a.selected {
-        font-weight: bold;
-        color: #2a5298;
+      position: relative;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
     }
     .main-content {
-        margin-left: 270px;
-        padding: 2rem;
+      margin-left: 0;
+      padding: 1.5rem 1rem;
+      max-width: 100%;
+      min-height: auto;
+    }
+  }
+  @media (max-width: 600px) {
+    nav ul {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .accordion {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+    }
+    .panel a {
+      font-size: 0.9rem;
+    }
+    .main-content {
+      padding: 1rem 0.5rem;
     }
     .resource-card {
-        background: #fff;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #2a5298;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      padding: 1rem 1.2rem;
     }
     .resource-title {
-        font-size: 1.2rem;
-        color: #2a5298;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    .resource-source {
-        font-size: 0.9rem;
-        color: #555;
-        margin-bottom: 0.5rem;
-    }
-    .resource-link {
-        color: #00704a;
-        text-decoration: underline;
-        font-weight: 500;
+      font-size: 1.2rem;
     }
     .resource-desc {
-        font-size: 1rem;
-        line-height: 1.6;
-        color: #222;
-        margin-top: 0.8rem;
+      font-size: 1rem;
     }
-    .no-resources {
-        color: #c0392b;
-        font-size: 1.1rem;
-        text-align: center;
-        margin-top: 2rem;
-    }
+  }
 </style>
 
 <header>
-        <nav>
-            <ul>
-                 <li><a href="{% url 'course_list' %}">Courses</a></li>
-                 <li><a href="{%url 'student_profile' %}">Profile</a></li>
-            </ul>
-        </nav>
-    </header>
+  <nav>
+    <ul>
+      <li><a href="{% url 'course_list' %}">Courses</a></li>
+      <li><a href="{% url 'student_profile' %}">Profile</a></li>
+    </ul>
+  </nav>
+</header>
 
 {% load custom_tags %}
 
-<div class="sidebar">
+<div class="container">
+  <aside class="sidebar">
     <div class="sidebar-header">Courses</div>
     <ul class="sidebar-list">
-        {% for course, topics in grouped_resources.items %}
-            <li>
-                <button class="accordion">{{ course }}</button>
-                <div class="panel">
-                    {% for topic in topics.keys %}
-                        <a href="?course={{ course|urlencode }}&topic={{ topic|urlencode }}"
-                           class="{% if topic == selected_topic and course == selected_course %}selected{% endif %}">
-                            {{ topic }}
-                        </a>
-                    {% endfor %}
-                </div>
-            </li>
-        {% endfor %}
+      {% for course, topics in grouped_resources.items %}
+      <li>
+        <button class="accordion">{{ course }}</button>
+        <div class="panel">
+          {% for topic in topics.keys %}
+          <a href="?course={{ course|urlencode }}&topic={{ topic|urlencode }}"
+            class="{% if topic == selected_topic and course == selected_course %}selected{% endif %}">
+            {{ topic }}
+          </a>
+          {% endfor %}
+        </div>
+      </li>
+      {% endfor %}
     </ul>
-</div>
+  </aside>
 
-<div class="main-content">
+  <main class="main-content">
     <h2>Learning Resources</h2>
     {% if selected_course and selected_topic %}
-        <h3>{{ selected_course }} → {{ selected_topic }}</h3>
-        {% with topics=grouped_resources|get:selected_course %}
-            {% with res_list=topics|get:selected_topic %}
-                {% if res_list %}
-                    {% for res in res_list %}
-                        <div class="resource-card">
-                            <div class="resource-title">{{ res.title|default_if_none:res.topic }}</div>
-                            <div class="resource-source"><strong>Source:</strong> {{ res.source|default:"Unknown" }}</div>
-                            <div class="resource-desc">{{ res.description|safe }}</div>
-
-
-                            {% if res.url %}
-                                <a class="resource-link" href="{{ res.url }}" target="_blank">Visit Source</a>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="no-resources">No resources found for this topic.</div>
-                {% endif %}
-            {% endwith %}
-        {% endwith %}
-    {% elif selected_course %}
-        <div class="no-resources">Select a topic to view resources.</div>
+    <h3>{{ selected_course }} → {{ selected_topic }}</h3>
+    {% with topics=grouped_resources|get:selected_course %}
+    {% with res_list=topics|get:selected_topic %}
+    {% if res_list %}
+    {% for res in res_list %}
+    <article class="resource-card">
+      <div class="resource-title">{{ res.title|default_if_none:res.topic }}</div>
+      <div class="resource-source"><strong>Source:</strong> {{ res.source|default:"Unknown" }}</div>
+      <div class="resource-desc">{{ res.description|safe }}</div>
+      {% if res.url %}
+      <a class="resource-link" href="{{ res.url }}" target="_blank">Visit Source</a>
+      {% endif %}
+    </article>
+    {% endfor %}
     {% else %}
-        <div class="no-resources">Select a course and topic to view resources.</div>
+    <div class="no-resources">No resources found for this topic.</div>
     {% endif %}
+    {% endwith %}
+    {% endwith %}
+    {% elif selected_course %}
+    <div class="no-resources">Select a topic to view resources.</div>
+    {% else %}
+    <div class="no-resources">Select a course and topic to view resources.</div>
+    {% endif %}
+  </main>
 </div>
 
 <script>
-    const acc = document.getElementsByClassName("accordion");
-    for (let i = 0; i < acc.length; i++) {
-        acc[i].addEventListener("click", function () {
-            this.classList.toggle("active");
-            const panel = this.nextElementSibling;
-            if (panel.style.maxHeight) {
-                panel.style.maxHeight = null;
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        });
-    }
+  const acc = document.getElementsByClassName("accordion");
+  for (let i = 0; i < acc.length; i++) {
+    acc[i].addEventListener("click", function () {
+      this.classList.toggle("active");
+      const panel = this.nextElementSibling;
+      if (panel.style.maxHeight) {
+        panel.style.maxHeight = null;
+      } else {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+      }
+    });
+  }
 </script>
 {% endblock %}

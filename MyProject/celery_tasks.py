@@ -74,13 +74,13 @@ from .Filter import filter_resources
 def regenerate_learning_path_task(username, topic_id):
     try:
         topic = Topic.objects.get(id=topic_id)
-        student = Student_Profile.objects.get(user__username=username)
+        user = Student_Profile.objects.get(id=user.id)
         course = topic.course
 
         scraped = scrape_topic_data([topic.name])
         filtered = filter_resources(scraped)
 
-        build_learning_path(student, course, [topic], filtered)
+        build_learning_path(user, course, [topic], filtered)
 
         return f"Regenerated path for {username} on topic {topic.name}"
     except Exception as e:

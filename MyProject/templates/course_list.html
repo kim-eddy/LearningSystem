@@ -49,6 +49,11 @@
             border-radius: 12px;
             box-shadow: 0 2px 16px rgba(42,82,152,0.08);
             padding: 2rem 2.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        main:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(42,82,152,0.1), 0 10px 10px -5px rgba(42,82,152,0.04);
         }
         h2 {
             color: #2a5298;
@@ -64,6 +69,11 @@
             box-shadow: 0 1px 4px rgba(42,82,152,0.04);
             padding: 1.2rem 1.5rem;
             list-style: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        li.course-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(42,82,152,0.1);
         }
         li.course-item strong a {
             color: #2a5298;
@@ -111,6 +121,7 @@
                 <li><a href="{% url 'learning_resources' %}">Learning resources</a></li>
                 <li><a href="{% url 'student_profile' %}">Profile</a></li>
                 <li><a href="{% url 'learning_path_view' %}">Learning Path</a></li>
+                <li><a href="{% url 'leaderboard' %}">Leaderboard</a></li>
 
             </ul>
         </nav>
@@ -162,6 +173,30 @@
                 {% endfor %}
             </ul>
         </section>
+        <!-- Projects-->
+         <section>
+            <h2>Projects</h2>
+            <ul style="padding:0;">
+                {% for project in projects %}
+                    <li class="course-item">
+                        <strong><a href="{% url 'project_assignment' project_id %}">{{ project.name }}</a></strong>
+                        <p>{{ project.description }}</p>
+                        
+                        {% if project.id in enrolled_project_id %}
+                            <p class="enrolled">Already Enrolled</p>
+                        {% else %}
+                            <form method="post" style="margin-top: 10px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="project_id" value="{{ project_id }}">
+                                <button type="submit">Enroll</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li>No projects available at the moment.</li>
+                {% endfor %}
+            </ul>
+         </section>
     </main>
 
    

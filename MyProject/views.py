@@ -6,6 +6,7 @@ from .forms import SignupForm, StudentProfileUpdateForm
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
 from collections import defaultdict
+from .models import ChatHistory
 from .models import Project, StudentProject, TopicProgress
 from .mongo_service import store_learning_path, get_learning_path
 from django.http import JsonResponse
@@ -13,7 +14,7 @@ from .redis_service import save_student_session, get_student_session
 from .celery_tasks import generate_recommendations_task
 from django.utils import timezone
 from django.views.decorators.http import require_POST   
-from .models import TopicProgress, Student_Profile, Course
+from .models import TopicProgress, Student_Profile, Course, StudentBadge
 from django.shortcuts import redirect
 from django.db import connection
 from django.shortcuts import get_object_or_404
@@ -29,8 +30,13 @@ import markdown
 from .chatbot import gemini_chat
 from django.utils.html import escape
 from .ai_grading import ai_grade_project
+from .Leaderboard_badges import award_badge
 import json
+import os
+import tempfile
+import fitz
 import logging
+import google.generativeai as genai
 
 
 
@@ -45,14 +51,59 @@ logger = logging.getLogger(__name__)
 
 user = None  # Placeholder for user object, to be used in views where needed
 
-@csrf_exempt
-def gemini_chat_view(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        user_message = data.get("message")
-        reply = gemini_chat(user_message)
-        return JsonResponse({"response": reply})
 
+# Configure Gemini
+genai.configure(api_key="AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk")
+model = genai.GenerativeModel("gemini-2.5-flash")
+
+@csrf_exempt
+@login_required
+def gemini_chat_view(request):
+    user = request.user
+    if request.method == "POST":
+        message = request.POST.get("message", "")
+        uploaded_file = request.FILES.get("file")
+
+        file_content = ""
+        if uploaded_file:
+            ext = uploaded_file.name.split(".")[-1].lower()
+            temp_path = tempfile.mktemp(suffix=f".{ext}")
+            with open(temp_path, "wb+") as temp_file:
+                for chunk in uploaded_file.chunks():
+                    temp_file.write(chunk)
+
+            try:
+                if ext == "txt":
+                    with open(temp_path, "r", encoding="utf-8") as f:
+                        file_content = f.read()
+                elif ext == "pdf":
+                    doc = fitz.open(temp_path)
+                    file_content = "\n".join(page.get_text() for page in doc)
+                    doc.close()
+                else:
+                    file_content = "[Unsupported file format]"
+            finally:
+                os.remove(temp_path)
+
+        # Combine file + message
+        prompt = f"{file_content.strip()}\n\nUser's question: {message.strip()}" if file_content else message.strip()
+
+        try:
+            chat = model.start_chat(history=[])
+            gemini_response = chat.send_message(prompt)
+            response_text = gemini_response.text
+        except Exception as e:
+            response_text = f"Error: {str(e)}"
+
+        ChatHistory.objects.create(
+            user=user,
+            message=message,
+            gemini_response=response_text,
+            timestamp=timezone.now()
+        )
+     
+
+        return JsonResponse({"response": response_text})
 
 def index(request):
     
@@ -124,6 +175,7 @@ def materials_view(request, material_id):
 def student_profile(request):
     student_profile = Student_Profile.objects.get(user=request.user)
     courses = Course.objects.filter(grade=student_profile.grade)
+    badges = StudentBadge.objects.filter(student=student_profile)
     progress = Student_Progress.objects.filter(student=student_profile)
     interests = request.POST.get('interests', '')
     student_profile.save()
@@ -138,9 +190,9 @@ def student_profile(request):
             course_title = courses.first().title if courses.exists() else "General"
 
             generate_recommendations_task.delay(
-                user=request.user,
+                user=request.user.id,
                 interests=interests,
-                fav_sources=[course_title]
+                
             )
 
             return redirect('student_profile')
@@ -151,7 +203,8 @@ def student_profile(request):
         'student_profile': student_profile,
         'courses': courses,
         'progress': progress,
-        'form': form  
+        'form': form,
+        'badges': badges 
     })
 @login_required
 def student_progress(request):
@@ -542,13 +595,19 @@ def learning_path_view(request):
             "topic": entry.topic,      # Pass the Topic object
             "resources": resources
         })
+    for res in resources:
+        try:
+            res["description"] = markdown.markdown(res.get("description", ""))
+        except Exception as e:
+            logger.warning(f"Markdown conversion failed: {e}")
+            res["description"] = "<p><em>Failed to load content.</em></p>"
     return render(request, 'learning_path.html', {"learning_path": learning_path})
 
 @login_required
 def learning_resources(request):
     user = request.user
-    selected_course = request.GET.get('course')  # ✅ match the template
-    selected_topic = request.GET.get('topic')    # ✅ needed for filtering
+    selected_course = request.GET.get('course')  # match the template
+    selected_topic = request.GET.get('topic')    # needed for filtering
 
     # Connect to MongoDB
     client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
@@ -564,11 +623,17 @@ def learning_resources(request):
         course = res.get("course", "Unknown Course")
         topic = res.get("topic", "Unknown Topic")
         grouped_resources.setdefault(course, {}).setdefault(topic, []).append(res)
-
+    for res in resources:
+        try:
+            res["description"] = markdown.markdown(res.get("description", ""))
+        except Exception as e:
+            logger.warning(f"Markdown conversion failed: {e}")
+            res["description"] = "<p><em>Failed to load content.</em></p>"
+    
     return render(request, 'learning_resources.html', {
         "grouped_resources": grouped_resources,
-        "selected_course": selected_course,     # ✅ pass to template
-        "selected_topic": selected_topic        # ✅ pass to template
+        "selected_course": selected_course,     # pass to template
+        "selected_topic": selected_topic        # pass to template
     })
 
 def study_topic_view(request, topic_id):
@@ -623,10 +688,12 @@ def study_topic_view(request, topic_id):
 def mark_topic_completed(request, topic_id):
     student = Student_Profile.objects.get(user=request.user)
     topic = Topic.objects.get(id=topic_id)
+    
 
     progress, created = TopicProgress.objects.get_or_create(
         student=student,
-        topic=topic
+        topic=topic,
+        
     )
     progress.progress_percentage = 100.0
     progress.last_accessed = timezone.now()
@@ -732,3 +799,14 @@ def update_course_progress(student, course):
     student_progress.progress_percentage = percentage
     student_progress.completed = (percentage == 100.0)
     student_progress.save()
+
+def complete_topic(request, topic_id):
+    # Your topic completion logic here
+    ...
+    # Trigger badge award
+    award_badge.delay(request.user.id, "completed_first_topic")
+
+def leaderboard_view(request):
+    from .models import Leaderboard
+    leaderboard = Leaderboard.objects.order_by('-score')[:10]  # Top 10 users
+    return render(request, 'leaderboard.html', {'leaderboard': leaderboard})

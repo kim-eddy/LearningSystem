@@ -10,6 +10,7 @@ class Grade(models.Model):
     
 class Course(models.Model):
     title = models.CharField(max_length=65)
+    
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
     description = models.TextField()
     def __str__(self):
@@ -31,15 +32,23 @@ class Assessment(models.Model):
 
 
 class Student_Profile(models.Model):
-      user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
-      grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
-      courses = models.ManyToManyField(Course, blank=True)
-      school = models.ForeignKey('School', on_delete=models.CASCADE, blank=True, null=True)
-      phone_number = models.CharField(max_length=15, blank=True)
-      email = models.EmailField(blank=True)
-      interests = models.JSONField(default=list, blank=True)  
-      def __str__(self):
-          return self.user.username
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
+    courses = models.ManyToManyField(Course, blank=True)
+    school = models.ForeignKey('School', on_delete=models.CASCADE, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True)
+    email = models.EmailField(blank=True)
+    interests = models.JSONField(default=list, blank=True)
+
+    def __str__(self):
+        return self.user.username
+
+    @property
+    def badges(self):
+        from .models import StudentBadge 
+        return StudentBadge.objects.filter(user=self)
+
+
 class Materials(models.Model):
      MATERIAL_TYPE_CHOICES = [
          ('video', 'Video'),
@@ -227,3 +236,46 @@ class StudentProject(models.Model):
 
     def __str__(self):
         return f"{self.student.user.username} - {self.project.title}"
+    
+class ChatHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    gemini_response = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+
+class Badges(models.Model):
+    
+    badge_name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    awarded_on = models.DateTimeField(auto_now_add=True)
+    icon = models.ImageField(upload_to='badges/', blank=True, null=True)
+    criteria = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return  self.badge_name
+    
+class StudentBadge(models.Model):
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
+    badge = models.ForeignKey(Badges, on_delete=models.CASCADE)
+    awarded_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'badge')
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.badge.badge_name}"
+    
+class Leaderboard(models.Model):
+    student = models.ForeignKey(Student_Profile, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
+    rank = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-score', 'student']
+
+    def __str__(self):
+        return f"{self.student.user.username} - Score: {self.score} - Rank: {self.rank}"

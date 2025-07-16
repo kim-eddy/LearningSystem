@@ -1,5 +1,3 @@
-<!-- Gemini Chatbox UI (W3Schools Inspired) -->
-
 <!-- Floating Chat Toggle Button -->
 <button onclick="toggleChatbox()" style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#2a5298;color:#fff;border:none;border-radius:50%;width:50px;height:50px;box-shadow:0 2px 6px rgba(0,0,0,0.2);font-size:1.5rem;cursor:pointer;">
     💬
@@ -12,6 +10,9 @@
     </div>
     <div id="chat-log" style="height:250px;overflow-y:auto;padding:10px;font-size:0.95rem;white-space:pre-wrap;"></div>
     <div style="display:flex;border-top:1px solid #ddd;">
+        <label for="file-upload" style="cursor:pointer;background:#2a5298;color:white;border:none;padding:8px 12px;border-radius:4px;font-size:1.2rem;">+</label>
+        <input type="file" id="file-upload" style="display:none;">
+        
         <input type="text" id="chat-input" placeholder="Ask something..." style="flex:1;padding:8px;border:none;outline:none;">
         <button id="send-btn" style="background:#2a5298;color:white;border:none;padding:8px 12px;cursor:pointer;">Send</button>
     </div>
@@ -21,6 +22,7 @@
     const chatLog = document.getElementById("chat-log");
     const chatInput = document.getElementById("chat-input");
     const sendBtn = document.getElementById("send-btn");
+    const fileInput = document.getElementById("file-upload");
 
     function toggleChatbox() {
         const box = document.getElementById("gemini-chatbox");
@@ -37,10 +39,16 @@
 
     sendBtn.addEventListener("click", async () => {
         const message = chatInput.value.trim();
-        if (!message) return;
+        const file = fileInput.files[0];
+        if (!message && !file) return;
 
-        appendMessage("You", message);
+        let displayText = "";
+        if (message) displayText += message;
+        if (file) displayText += `<br>📎 Uploaded: ${file.name}`;
+        appendMessage("You", displayText);
+
         chatInput.value = "";
+        fileInput.value = "";
 
         const typingMsg = document.createElement("div");
         typingMsg.innerHTML = `<strong>Gemini:</strong> <em>Typing...</em>`;
@@ -48,17 +56,27 @@
         chatLog.appendChild(typingMsg);
         chatLog.scrollTop = chatLog.scrollHeight;
 
+        const formData = new FormData();
+        formData.append("message", message);
+        if (file) formData.append("file", file);
+
         try {
             const res = await fetch("{% url 'gemini_chat' %}", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
                     "X-CSRFToken": "{{ csrf_token }}"
                 },
-                body: JSON.stringify({ message: message })
+                body: formData
             });
-            const data = await res.json();
-            typingMsg.innerHTML = `<strong>Gemini:</strong> ${data.response}`;
+
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await res.json();
+                typingMsg.innerHTML = `<strong>Gemini:</strong> ${data.response}`;
+            } else {
+                const html = await res.text();
+                typingMsg.innerHTML = `<strong>Gemini:</strong> <span style='color:red;'>Unexpected response from server:</span><br><pre>${html}</pre>`;
+            }
         } catch (err) {
             typingMsg.innerHTML = `<strong>Gemini:</strong> <span style='color:red;'>Error: ${err.message}</span>`;
         }

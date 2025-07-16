@@ -117,38 +117,107 @@
             }
         }
     </style>
+    <style>
+        /* Badges section styles */
+        ul.grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1.5rem;
+            padding-left: 0;
+            margin-top: 1rem;
+        }
+        ul.grid li {
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(42,82,152,0.1);
+            padding: 1rem 1.2rem;
+            text-align: center;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            cursor: default;
+        }
+        ul.grid li:hover {
+            box-shadow: 0 8px 24px rgba(42,82,152,0.2);
+            transform: translateY(-4px);
+        }
+        ul.grid li img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            margin-bottom: 0.6rem;
+        }
+        ul.grid li p {
+            font-weight: 700;
+            color: #2a5298;
+            margin: 0.4rem 0 0.2rem 0;
+            font-size: 1.1rem;
+        }
+        ul.grid li small {
+            display: block;
+            color: #6b7280; /* gray-500 */
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+        ul.grid li small.text-green-700 {
+            color: #047857; /* green-700 */
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
     <header>
         <nav>
             <ul>
                 <li><a href="{% url 'index' %}">Home</a></li>
+                <li><a href="{% url 'leaderboard' %}">Leaderboard</a></li>
             </ul>
         </nav>
     </header>
 
     <h1>Welcome, {{ student_profile.user.username }}</h1>
 
-    <div class="profile">
-        <h2>Profile Information</h2>
-        <p><strong>Grade:</strong> {{ student_profile.grade }}</p>
-        <p><strong>School:</strong> {{ student_profile.school.name }}</p>
-    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 2rem; max-width: 1100px; margin: 0 auto;">
+        <div style="flex: 1 1 600px; min-width: 300px;">
+            <div class="profile" style="margin-bottom: 1.5rem;">
+                <h2>Profile Information</h2>
+                <p><strong>Grade:</strong> {{ student_profile.grade }}</p>
+                <p><strong>School:</strong> {{ student_profile.school.name }}</p>
+            </div>
 
-    <div class="profile">
-        <form method="POST">
-        {% csrf_token %}
-        <h2>Contact Info</h2>
-        <label for="phone_number">Phone Number:</label>
-        <input type="text" name="phone_number" id="phone_number" value="{{ student_profile.phone_number }}"><br><br>
+            <div class="profile">
+                <form method="POST">
+                {% csrf_token %}
+                <h2>Contact Info</h2>
+                <label for="phone_number">Phone Number:</label>
+                <input type="text" name="phone_number" id="phone_number" value="{{ student_profile.phone_number }}"><br><br>
 
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email" value="{{ student_profile.email }}"><br><br>
+                <label for="email">Email:</label>
+                <input type="email" name="email" id="email" value="{{ student_profile.email }}"><br><br>
 
-        
+                <button type="submit">Update Contact Info</button>
+                </form>
+            </div>
+        </div>
 
-        <button type="submit">Update Contact Info</button>
-        </form>
+        <div style="flex: 0 0 350px; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(42,82,152,0.08); padding: 1rem 1.5rem;">
+            <h2>Your Badges</h2>
+            {% if badges %}
+              <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 badges-list" style="padding-left: 0; margin-top: 1rem;">
+                {% for sb in badges %}
+                  <li class="badge-item" style="background: #fff; border: 1px solid #d1d5db; border-radius: 12px; box-shadow: 0 4px 12px rgba(42,82,152,0.1); padding: 1rem 1.2rem; text-align: center; transition: box-shadow 0.3s ease, transform 0.3s ease; cursor: default;">
+                    {% if sb.badge.icon %}
+                      <img src="{{ sb.badge.icon.url }}" alt="{{ sb.badge.name }}" class="badge-icon" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 0.6rem;">
+                    {% endif %}
+                    <p class="badge-name" style="font-weight: 700; color: #2a5298; margin: 0.4rem 0 0.2rem 0; font-size: 1.1rem;">{{ sb.badge.name }}</p>
+                    <small class="badge-desc" style="display: block; color: #6b7280; font-size: 0.85rem; margin-bottom: 0.2rem;">{{ sb.badge.description }}</small><br>
+                    <small class="badge-date" style="color: #047857; font-weight: 600;">Awarded on {{ sb.awarded_on|date:"M d, Y" }}</small>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p>You have not earned any badges yet.</p>
+            {% endif %}
+        </div>
     </div>
 
     <div class="courses">
@@ -192,5 +261,3 @@
             <p>No progress data found.</p>
         {% endif %}
     </div>
-
-    
