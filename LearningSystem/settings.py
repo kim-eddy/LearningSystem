@@ -20,7 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-o_x$r%tr$(hfgf%^3rmjl25*&k$#$-3-70i5x&slh3!i9l$q^r'
+SECRET_KEY = 'vat%j+gj)$69y%#%%e(1l89(e@1)&dd$=wa)b$vv9+qre(vx4z'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -73,10 +74,9 @@ WSGI_APPLICATION = 'LearningSystem.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'mysql.connector.django',  
         'NAME': 'LearningSystem',
         'USER': 'emmanuel',
         'PASSWORD': 'K7154muhell',
@@ -84,6 +84,7 @@ DATABASES = {
         'PORT': '3306',
     }
 }
+
 
 
 
@@ -129,7 +130,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/home/'
 REDIRECT = 'login'
-LOGIN_URL = '/login/'
+LOGIN_URL = '/accounts/login/'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
