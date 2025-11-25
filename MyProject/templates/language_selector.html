@@ -1,0 +1,176 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Language - Learning System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .language-selector {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            padding: 3rem 2rem;
+            max-width: 700px;
+            width: 100%;
+        }
+        .language-selector h1 {
+            color: #2a5298;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .language-selector p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .language-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .language-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .language-option {
+            position: relative;
+        }
+        .language-option input[type="radio"] {
+            display: none;
+        }
+        .language-option label {
+            display: block;
+            padding: 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 0;
+            font-weight: 500;
+            color: #333;
+            background: #f9f9f9;
+        }
+        .language-option label:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+            transform: translateY(-2px);
+        }
+        .language-option input[type="radio"]:checked + label {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .language-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: center;
+        }
+        .btn {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+        }
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+    </style>
+</head>
+<body>
+    <div class="language-selector">
+        <h1>🌍 Select Your Language</h1>
+        <p>Choose your preferred language to get started with the Learning System</p>
+        
+        <form method="post" action="{% url 'set_language' %}">
+            {% csrf_token %}
+            
+            <div class="language-grid">
+                <!-- English -->
+                <div class="language-option">
+                    <input type="radio" id="lang_en" name="language" value="en" {% if user_language == 'en' %}checked{% endif %} required>
+                    <label for="lang_en">
+                        <span class="language-icon">🇬🇧</span>
+                        <strong>English</strong>
+                    </label>
+                </div>
+                
+                <!-- Kiswahili -->
+                <div class="language-option">
+                    <input type="radio" id="lang_sw" name="language" value="sw" {% if user_language == 'sw' %}checked{% endif %}>
+                    <label for="lang_sw">
+                        <span class="language-icon">🇰🇪</span>
+                        <strong>Kiswahili</strong>
+                    </label>
+                </div>
+                
+                <!-- Sheng' -->
+                <div class="language-option">
+                    <input type="radio" id="lang_sheng" name="language" value="sheng" {% if user_language == 'sheng' %}checked{% endif %}>
+                    <label for="lang_sheng">
+                        <span class="language-icon">🎤</span>
+                        <strong>Sheng'</strong>
+                    </label>
+                </div>
+                
+                <!-- Kikuyu -->
+                <div class="language-option">
+                    <input type="radio" id="lang_ki" name="language" value="ki" {% if user_language == 'ki' %}checked{% endif %}>
+                    <label for="lang_ki">
+                        <span class="language-icon">🇰🇪</span>
+                        <strong>Kikuyu</strong>
+                    </label>
+                </div>
+                
+                <!-- Kisomali -->
+                <div class="language-option">
+                    <input type="radio" id="lang_so" name="language" value="so" {% if user_language == 'so' %}checked{% endif %}>
+                    <label for="lang_so">
+                        <span class="language-icon">🇸🇴</span>
+                        <strong>Kisomali</strong>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Continue</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary">Skip for Now</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

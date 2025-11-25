@@ -27,11 +27,19 @@ from .views import (
     update_progress,
     project_view,
     gemini_chat_view,
-    leaderboard_view
+    leaderboard_view,
+    select_language,
+    set_language,
+    language_settings,
+    get_translation_json
 )
 urlpatterns = [
     path('', index, name='index'),
     path('home/', home, name='home'),
+    path('language/', select_language, name='select_language'),
+    path('language/set/', set_language, name='set_language'),
+    path('language/settings/', language_settings, name='language_settings'),
+    path('api/translation/<str:key>/', get_translation_json, name='get_translation'),
     path('courses/', course_list, name='course_list'),
     path('courses/<int:course_id>/', course_detail, name='course_detail'),
     path('topics/<int:topic_id>/', topic_detail, name='topic_detail'),
@@ -58,7 +66,4 @@ urlpatterns = [
     path('test/grade/<int:submission_id>/', test_grade_project, name='test_grade_project'),
     path('gemini-chat/', gemini_chat_view, name='gemini_chat'),
     path('leaderboard/', leaderboard_view, name='leaderboard'),
-
-
-
 ]

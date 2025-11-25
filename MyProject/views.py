@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Course, Topic, Assessment, Materials, Student_Profile, Student_Progress, AI_Assessment, LearningPath
 from django.contrib.auth.decorators import login_required
-from .forms import SignupForm, StudentProfileUpdateForm
+from .forms import SignupForm, StudentProfileUpdateForm, LanguagePreferenceForm
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
 from collections import defaultdict
@@ -31,6 +31,8 @@ from .chatbot import gemini_chat
 from django.utils.html import escape
 from .ai_grading import ai_grade_project
 from .Leaderboard_badges import award_badge
+from .language_utils import get_translation, get_available_languages
+from django.contrib import messages
 import json
 import os
 import tempfile
@@ -106,13 +108,98 @@ def gemini_chat_view(request):
         return JsonResponse({"response": response_text})
     
 
+# ============================================
+# LANGUAGE PREFERENCE VIEWS
+# ============================================
+
+def select_language(request):
+    """Display language selection during signup or first login"""
+    user_language = 'en'
+    if request.user.is_authenticated:
+        try:
+            profile = Student_Profile.objects.get(user=request.user)
+            user_language = profile.preferred_language
+        except Student_Profile.DoesNotExist:
+            pass
+    
+    return render(request, 'language_selector.html', {
+        'user_language': user_language,
+        'languages': get_available_languages()
+    })
+
+
+@login_required
+def set_language(request):
+    """Set user's preferred language"""
+    if request.method == 'POST':
+        language = request.POST.get('language', 'en')
+        
+        try:
+            profile = Student_Profile.objects.get(user=request.user)
+            profile.preferred_language = language
+            profile.save()
+            messages.success(request, get_translation('language_updated', language))
+        except Student_Profile.DoesNotExist:
+            messages.error(request, 'Student profile not found.')
+        
+        return redirect('home')
+    
+    return redirect('language_settings')
+
+
+@login_required
+def language_settings(request):
+    """User language preferences page"""
+    try:
+        profile = Student_Profile.objects.get(user=request.user)
+    except Student_Profile.DoesNotExist:
+        return redirect('select_language')
+    
+    if request.method == 'POST':
+        form = LanguagePreferenceForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            language = form.cleaned_data.get('preferred_language', 'en')
+            messages.success(request, get_translation('language_updated', language))
+            return redirect('language_settings')
+    else:
+        form = LanguagePreferenceForm(instance=profile)
+    
+    return render(request, 'language_settings.html', {
+        'form': form,
+        'profile': profile,
+        'languages': get_available_languages()
+    })
+
+
+def get_translation_json(request, key):
+    """API endpoint to get translations"""
+    try:
+        profile = Student_Profile.objects.get(user=request.user) if request.user.is_authenticated else None
+        language = profile.preferred_language if profile else 'en'
+    except Student_Profile.DoesNotExist:
+        language = 'en'
+    
+    translation = get_translation(key, language)
+    return JsonResponse({'translation': translation, 'language': language})
+
 def index(request):
     
     return render(request, 'index.html')
 
 @login_required
 def home(request):
-    return render(request, 'home.html')
+    try:
+        profile = Student_Profile.objects.get(user=request.user)
+        language = profile.preferred_language
+    except Student_Profile.DoesNotExist:
+        language = 'en'
+    
+    context = {
+        'user_language': language,
+        'get_translation': lambda key: get_translation(key, language)
+    }
+    return render(request, 'home.html', context)
 
 @login_required
 def course_list(request):
