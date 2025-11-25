@@ -133,4 +133,5 @@ LOGIN_URL = '/accounts/login/'
 
 CELERY_BROKER_URL = 'redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@redis.railway.internal:6379'
 CELERY_RESULT_BACKEND = 'redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@redis.railway.internal:6379'
+MONGO_URI = 'mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@mongodb.railway.internal:27017'
 
