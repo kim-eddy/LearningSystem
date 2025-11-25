@@ -50,7 +50,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'MyProject.middleware.LanguageMiddleware',
 ]
 
 ROOT_URLCONF = 'LearningSystem.urls'
@@ -130,7 +129,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/home/'
-REDIRECT = 'login'
 LOGIN_URL = '/accounts/login/'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
