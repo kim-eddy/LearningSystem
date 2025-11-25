@@ -77,10 +77,10 @@ WSGI_APPLICATION = 'LearningSystem.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mysql.connector.django',  
-        'NAME': 'LearningSystem',
-        'USER': 'emmanuel',
-        'PASSWORD': 'K7154muhell',
-        'HOST': 'localhost',
+        'NAME': 'railway',
+        'USER': 'root',
+        'PASSWORD': 'JOwJHNqsuEITqzqJUNNVajFwaDPznwRO',
+        'HOST': 'mysql.railway.internal',
         'PORT': '3306',
     }
 }
