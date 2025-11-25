@@ -27,7 +27,7 @@ idna==3.11
 kombu==5.5.4
 Markdown==3.10
 
-mysqlclient
+mysqlclient==2.2.7
 packaging==25.0
 pillow==12.0.0
 prompt_toolkit==3.0.51
