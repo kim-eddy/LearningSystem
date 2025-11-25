@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_SECRET_KEY=django-insecure-o_x$r%tr$(hfgf%^3rmjl25*&k$#$-3-70i5x&slh3!i9l$q^r
+      - DATABASE_URL=mysql://user:emmanuel:3306/LearningSystem
+      - MONGO_URI=mongodb://mongo:27017/LearningSystem
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      - mysql
+      - mongo
+      - redis
+
+  worker:
+    build: .
+    command: celery -A LearningSystem worker --loglevel=info
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
+
+  beat:
+    build: .
+    command: celery -A LearningSystem beat --loglevel=info -S django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: LearningSystem
+      MYSQL_USER: emmanuel
+      MYSQL_PASSWORD: K7154muhell
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"

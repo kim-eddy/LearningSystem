@@ -5,6 +5,7 @@ from .tests import test_grade_project
 
 from .views import (
     index,
+    home,
     course_list,
     course_detail,
     topic_detail,
@@ -27,10 +28,10 @@ from .views import (
     project_view,
     gemini_chat_view,
     leaderboard_view
-
 )
 urlpatterns = [
     path('', index, name='index'),
+    path('home/', home, name='home'),
     path('courses/', course_list, name='course_list'),
     path('courses/<int:course_id>/', course_detail, name='course_detail'),
     path('topics/<int:topic_id>/', topic_detail, name='topic_detail'),

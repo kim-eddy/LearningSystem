@@ -104,10 +104,15 @@ def gemini_chat_view(request):
      
 
         return JsonResponse({"response": response_text})
+    
 
 def index(request):
     
     return render(request, 'index.html')
+
+@login_required
+def home(request):
+    return render(request, 'home.html')
 
 @login_required
 def course_list(request):
@@ -376,7 +381,7 @@ def submit_assessment(request):
         assessment = get_object_or_404(Assessment, id=assessment_id)
         student = Student_Profile.objects.get(user=request.user)
 
-        # Step 1: Score
+        # Score
         correct_answers = assessment.answer.split(',')
         for i, answer in enumerate(answers):
             if answer.strip().lower() == correct_answers[i].strip().lower():

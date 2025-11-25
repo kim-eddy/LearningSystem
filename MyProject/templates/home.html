@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Learning System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+        header {
+            background: #2a5298;
+            color: #fff;
+            padding: 2rem 0 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(42,82,152,0.08);
+        }
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        nav a:hover {
+            color: #ffd700;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(42,82,152,0.08);
+            padding: 2rem 2.5rem;
+            text-align: center;
+        }
+        h2 {
+            color: #2a5298;
+            margin-top: 0;
+        }
+        p.welcome-text {
+            font-size: 1.2rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        @media (max-width: 600px) {
+            main {
+                padding: 1rem 0.5rem;
+            }
+            header h1 {
+                font-size: 1.3rem;
+            }
+            nav ul {
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Home</h1>
+        <nav>
+            <ul>
+                
+                <li><a href="{% url 'student_progress' %}">Progress</a></li>
+                <li><a href="{% url 'learning_resources' %}">Learning resources</a></li>
+                <li><a href="{% url 'student_profile' %}">Profile</a></li>
+                <li><a href="{% url 'learning_path_view' %}">Learning Path</a></li>
+                <li><a href="{% url 'leaderboard' %}">Leaderboard</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Welcome to the Learning System</h2>
+        <p class="welcome-text">
+            Explore courses, track your progress, and enhance your skills with our comprehensive learning platform.
+            Start your journey by selecting a course from the list or discovering new learning paths tailored for you.
+        </p>
+    </main>
+</body>
+</html>
