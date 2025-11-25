@@ -8,8 +8,11 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Install essential system dependencies
+# Added: pkg-config (to find libraries) and default-libmysqlclient-dev (the actual library headers)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    default-libmysqlclient-dev \
+    pkg-config \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
