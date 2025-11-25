@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import Course, Topic, Assessment, Materials, Student_Profile, Student_Progress, Grade, School
+from .language_utils import get_available_languages
 
 
 class CourseForm(forms.ModelForm):
@@ -26,12 +27,13 @@ class SignupForm(forms.ModelForm):
         model = Student_Profile
         fields = ['username', 'first_name', 'last_name', 'email', 
                  'password', 'confirm_password', 'phone_number', 
-                 'school', 'grade']
+                 'school', 'grade', 'preferred_language']
         
         widgets = {
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'school': forms.Select(attrs={'class': 'form-control'}),
             'grade': forms.Select(attrs={'class': 'form-control'}),
+            'preferred_language': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -66,7 +68,8 @@ class SignupForm(forms.ModelForm):
             user=user,
             phone_number=self.cleaned_data['phone_number'],
             school=self.cleaned_data['school'],  
-            grade=self.cleaned_data['grade'],    
+            grade=self.cleaned_data['grade'],
+            preferred_language=self.cleaned_data.get('preferred_language', 'en'),
         )
 
         if commit:
@@ -127,3 +130,19 @@ class StudentProfileUpdateForm(forms.ModelForm):
         if commit:
             profile.save()
         return profile
+
+
+class LanguagePreferenceForm(forms.ModelForm):
+    """Form for users to select their preferred language"""
+    
+    class Meta:
+        model = Student_Profile
+        fields = ['preferred_language']
+        widgets = {
+            'preferred_language': forms.RadioSelect(attrs={
+                'class': 'form-check-input language-radio'
+            }),
+        }
+        labels = {
+            'preferred_language': 'Select Your Preferred Language'
+        }

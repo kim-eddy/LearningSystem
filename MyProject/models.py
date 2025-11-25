@@ -32,6 +32,14 @@ class Assessment(models.Model):
 
 
 class Student_Profile(models.Model):
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('sw', 'Kiswahili'),
+        ('sheng', "Sheng'"),
+        ('ki', 'Kikuyu'),
+        ('so', 'Kisomali'),
+    ]
+    
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
     courses = models.ManyToManyField(Course, blank=True)
@@ -39,6 +47,12 @@ class Student_Profile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True)
     email = models.EmailField(blank=True)
     interests = models.JSONField(default=list, blank=True)
+    preferred_language = models.CharField(
+        max_length=10, 
+        choices=LANGUAGE_CHOICES, 
+        default='en',
+        help_text='Select your preferred language for the platform'
+    )
 
     def __str__(self):
         return self.user.username
