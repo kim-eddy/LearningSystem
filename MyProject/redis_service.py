@@ -1,6 +1,6 @@
 import redis
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
+r = redis.StrictRedis(host='redis.railway.internal', port=6379, db=0)
 
 def save_student_session(user, data):
     r.set(f"session:{user.id}", data)
