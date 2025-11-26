@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config
+from dotenv import load_dotenv # <-- Add this line
+
+# Add this line right after imports
+load_dotenv()
 
 GEMINI_API_KEY = config("GEMINI_API_KEY")
 
