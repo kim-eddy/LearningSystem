@@ -4,6 +4,7 @@ from .models import Student_Profile
 from .language_utils import get_translation
 
 
+
 class LanguageMiddleware:
     """
     Middleware to automatically add language preferences to request context.

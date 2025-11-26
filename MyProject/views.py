@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Course, Topic, Assessment, Materials, Student_Profile, Student_Progress, AI_Assessment, LearningPath
+from .models import Course, Topic, Assessment, Materials, Student_Profile, Student_Progress, AI_Assessment, LearningPath, Grade, School
 from django.contrib.auth.decorators import login_required
 from .forms import SignupForm, StudentProfileUpdateForm, LanguagePreferenceForm
 from django.contrib.auth import authenticate, login, logout
@@ -203,7 +203,19 @@ def home(request):
 
 @login_required
 def course_list(request):
-    student_profile = get_object_or_404(Student_Profile, user=request.user)
+    # Auto-create Student_Profile if it doesn't exist
+    student_profile, created = Student_Profile.objects.get_or_create(
+        user=request.user,
+        defaults={
+            'grade': Grade.objects.first() or Grade.objects.create(name='Default Grade'),
+            'school': School.objects.first() or School.objects.create(
+                name='Default School',
+                address='N/A',
+                phone_number='N/A',
+                email='default@school.com'
+            )
+        }
+    )
 
     if request.method == 'POST':
         course_id = request.POST.get('course_id')
@@ -224,15 +236,14 @@ def course_list(request):
         if assessment:
             return redirect('assessment_detail', assessment_id=assessment.id)
         else:
-            # No manual assessment exists, redirect to AI assessment (no assessment_id)
-            ai_url = '/assessments/ai/'  
-            return redirect(ai_url)
+            return redirect('/assessments/ai/')
 
     courses = Course.objects.all()
     return render(request, 'course_list.html', {
         'courses': courses,
         'student_profile': student_profile
     })
+
 
 @login_required
 def course_detail(request, course_id):
@@ -246,6 +257,7 @@ def course_detail(request, course_id):
         'materials': materials,
         'assessments': assessments
     })
+
 
 @login_required
 def topic_detail(request, topic_id):

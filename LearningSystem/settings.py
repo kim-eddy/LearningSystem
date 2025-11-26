@@ -26,7 +26,7 @@ SECRET_KEY = 'vat%j+gj)$69y%#%%e(1l89(e@1)&dd$=wa)b$vv9+qre(vx4z'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['learningsystem-2i38.onrender.com', 'localhost']
+ALLOWED_HOSTS = ['learningsystem-2i38.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'LearningSystem.urls'
