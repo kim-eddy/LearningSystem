@@ -47,7 +47,9 @@ def fetch_mongo_data():
 
 
 def fetch_redis_data():
-    r = redis.Redis("redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@mainline.proxy.rlwy.net:11017")
+    r = redis.Redis(host="mainline.proxy.rlwy.net",
+    port=11017,
+    password="LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf")
     keys = r.keys("material:*")
     results = []
     for key in keys:
@@ -161,7 +163,9 @@ Materials:
 
         
         try:
-            r = redis.Redis("redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@mainline.proxy.rlwy.net:11017")
+            r = redis.Redis(host="mainline.proxy.rlwy.net",
+    port=11017,
+    password="LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf")
             for item in results:
                 key = f"material:{item['title']}"
                 r.hset(key, mapping={
@@ -257,7 +261,9 @@ Materials:
 
         # Save to Redis (deduplicated)
         try:
-            r = redis.Redis("redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@mainline.proxy.rlwy.net:11017")
+            r = redis.Redis(host="mainline.proxy.rlwy.net",
+    port=11017,
+    password="LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf")
             for item in results:
                 key = f"material:{item['title']}"
                 if not r.exists(key):
