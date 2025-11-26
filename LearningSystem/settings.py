@@ -26,7 +26,7 @@ SECRET_KEY = 'vat%j+gj)$69y%#%%e(1l89(e@1)&dd$=wa)b$vv9+qre(vx4z'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [https://learningsystem-2i38.onrender.com]
+ALLOWED_HOSTS = ['https://learningsystem-2i38.onrender.com','localhost']
 
 
 # Application definition
