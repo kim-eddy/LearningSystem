@@ -7,6 +7,8 @@ import os
 import django
 import sys
 from django.conf import settings
+from MyProject.models import Student_Profile
+from MyProject.models import Resources
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LearningSystem.settings")
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

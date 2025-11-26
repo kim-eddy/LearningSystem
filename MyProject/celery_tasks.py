@@ -38,7 +38,7 @@ Materials:
         for item in results:
             try:
                 cursor.execute("""
-                    INSERT INTO resources (title, description, source, url)
+                    INSERT INTO MyProject_resources (title, description, source, url)
                     VALUES (%s, %s, %s, %s)
                 """, (item.get('title', ''), item.get('description', ''), item.get('source', ''), item.get('url', '')))
             except Exception as e:
