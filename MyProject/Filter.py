@@ -257,7 +257,7 @@ Materials:
 
         # Save to Redis (deduplicated)
         try:
-            r = redis.Redis(host='localhost', port=6379, db=0)
+            r = redis.Redis(host='mainline.proxy.rlwy.net', port=11017, db=0)
             for item in results:
                 key = f"material:{item['title']}"
                 if not r.exists(key):
