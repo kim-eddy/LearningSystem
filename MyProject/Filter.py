@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 django.setup()
 
 
-genai.configure(api_key="AIzaSyAx4to8JSa0k9iuIALEky4S0WFIU1Z01xo")
+genai.configure(api_key="GEMINI_API_KEY")
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 

@@ -422,7 +422,7 @@ def assessment_detail(request, assessment_id=None):
             ...
             """
             try:
-                GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAx4to8JSa0k9iuIALEky4S0WFIU1Z01xo"
+                GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
                 payload = {
                     "contents": [{"parts": [{"text": prompt}]}]
                 }
@@ -669,7 +669,7 @@ def learning_path_view(request):
             else:
                 prompt = f"Provide a concise, student-friendly summary and a practical example for the topic '{entry.topic.name}' in the course '{entry.course.title}'."
                 try:
-                    GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAx4to8JSa0k9iuIALEky4S0WFIU1Z01xo"
+                    GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
                     payload = {"contents": [{"parts": [{"text": prompt}]}]}
                     response = requests.post(GEMINI_API_URL, json=payload)
                     response.raise_for_status()
