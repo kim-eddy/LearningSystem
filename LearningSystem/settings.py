@@ -80,8 +80,8 @@ DATABASES = {
         'NAME': 'railway',
         'USER': 'root',
         'PASSWORD': 'JOwJHNqsuEITqzqJUNNVajFwaDPznwRO',
-        'HOST': 'mysql.railway.internal',
-        'PORT': '3306',
+        'HOST': 'ballast.proxy.rlwy.net',
+        'PORT': '22356',
     }
 }
 

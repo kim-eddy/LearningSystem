@@ -1,11 +1,14 @@
 import redis
 
-<<<<<<< HEAD
-r = redis.StrictRedis(redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@redis.railway.internal:6379)
-=======
-r = redis.StrictRedis(host='redis.railway.internal', port=6379, db=0)
+# Hardcoded Redis connection (for testing)
+r = redis.StrictRedis(
+    host='redis.railway.internal',
+    port=6379,
+    password='LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf',
+    db=0,
+    decode_responses=True
+)
 
->>>>>>> c27d540cc3cb36974a217ffd662c64599aadfb5f
 def save_student_session(user, data):
     r.set(f"session:{user.id}", data)
 
