@@ -1,9 +1,9 @@
 import requests
-
-GEMINI_API_KEY = "GEMINI_API_KEY"
+from django.conf import settings
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 
 def gemini_chat(user_message):
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
     headers = {
         "Content-Type": "application/json"
     }

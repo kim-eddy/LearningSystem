@@ -6,6 +6,7 @@ import json
 import os
 import django
 import sys
+from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LearningSystem.settings")
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 django.setup()
 
 
-genai.configure(api_key="GEMINI_API_KEY")
+genai.configure(api_key="settings.GEMINI_API_KEY")
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 
