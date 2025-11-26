@@ -1,6 +1,6 @@
 import requests
 
-GEMINI_API_KEY = "AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk"
+GEMINI_API_KEY = "AIzaSyAx4to8JSa0k9iuIALEky4S0WFIU1Z01xo"
 
 def gemini_chat(user_message):
     endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"

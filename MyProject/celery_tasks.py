@@ -29,10 +29,10 @@ Materials:
     # Store to MySQL
     try:
         conn = mysql.connector.connect(
-            host="localhost",
-            user="emmanuel",
-            password="K7154muhell",
-            database="LearningSystem"
+            host="ballast.proxy.rlwy.net",
+            user="root",
+            password="JOwJHNqsuEITqzqJUNNVajFwaDPznwRO",
+            database="railway"
         )
         cursor = conn.cursor()
         for item in results:

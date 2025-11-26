@@ -21,11 +21,11 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 
 def fetch_mysql_data():
     conn = mysql.connector.connect(
-        host="localhost",
-        port = '3306',
-        user="emmanuel",
-        password="K7154muhell",
-        database="LearningSystem",
+        host="ballast.proxy.rlwy.net",
+        port = '22356',
+        user="root",
+        password="JOwJHNqsuEITqzqJUNNVajFwaDPznwRO",
+        database="railway",
     )
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT title, description, source, url, topic_id FROM resources")
@@ -35,7 +35,7 @@ def fetch_mysql_data():
 
 
 def fetch_mongo_data():
-    client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+    client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
 
     db = client["LearningSystem"]
     collection = db["resources"]
@@ -58,10 +58,10 @@ def fetch_redis_data():
 
 def get_user_profile(user):
     conn = mysql.connector.connect(
-        host="localhost",
-        user="emmanuel",
-        password="K7154muhell",
-        database="LearningSystem"
+        host="ballast.proxy.rlwy.net",
+        user="root",
+        password="JOwJHNqsuEITqzqJUNNVajFwaDPznwRO",
+        database="railway"
     )
     cursor = conn.cursor(dictionary=True)
 
@@ -139,10 +139,10 @@ Materials:
         
         try:
             conn = mysql.connector.connect(
-                host="localhost",
-                user="emmanuel",
-                password="K7154muhell",
-                database="LearningSystem"
+                host="ballast.proxy.rlwy.net",
+                user="root",
+                password="JOwJHNqsuEITqzqJUNNVajFwaDPznwRO",
+                database="railway"
             )
             cursor = conn.cursor()
             for item in results:
@@ -220,10 +220,10 @@ Materials:
         # Save to MySQL (deduplicated)
         try:
             conn = mysql.connector.connect(
-                host="localhost",
-                user="emmanuel",
-                password="K7154muhell",
-                database="LearningSystem"
+                host="ballast.proxy.rlwy.net",
+                user="root",
+                password="JOwJHNqsuEITqzqJUNNVajFwaDPznwRO",
+                database="railway"
             )
             cursor = conn.cursor()
             for item in results:
@@ -241,7 +241,7 @@ Materials:
 
         # Save to MongoDB
         try:
-            client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+            client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
             db = client["LearningSystem"]
             collection = db["recommended_materials"]
             for item in results:
