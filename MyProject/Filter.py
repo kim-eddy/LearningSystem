@@ -264,7 +264,7 @@ Materials:
                     r.hset(key, mapping={
                         "title": item['title'],
                         "description": item['description'],
-                        "source": item['source'],
+                    
                         "url": item['url'],
                         
                     })
