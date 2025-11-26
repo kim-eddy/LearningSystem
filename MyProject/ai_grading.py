@@ -2,6 +2,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import requests
 from django.conf import settings
+from decouple import config
+
+GEMINI_API_KEY = config("GEMINI_API_KEY")
 
 @csrf_exempt
 def ai_grade_project(request):
@@ -21,7 +24,7 @@ Grade: <grade>
 Feedback: <feedback>
 """
         try:
-            GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAiLQuJFl5bNGDHJQIQoiwZN0r1Xnwzn1M"
+            GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}]
             }

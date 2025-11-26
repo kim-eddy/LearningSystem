@@ -6,7 +6,10 @@ GEMINI_API_KEY = settings.GEMINI_API_KEY
 def gemini_chat(user_message):
     # 1. FIX: Use a properly formatted f-string or simple string for the endpoint URL.
     # The API key should be passed as a parameter, not embedded in the base URL string.
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    endpoint = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+    )
     
     headers = {
         "Content-Type": "application/json"
