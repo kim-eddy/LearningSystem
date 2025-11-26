@@ -27,8 +27,7 @@ idna==3.11
 kombu==5.5.4
 Markdown==3.10
 mysql-connector-python==9.5.0
-gunicorn==21.2.0
-
+mysqlclient==2.2.7
 packaging==25.0
 pillow==12.0.0
 prompt_toolkit==3.0.51
@@ -42,6 +41,7 @@ pymongo==4.15.4
 PyMuPDF==1.26.6
 pyparsing==3.2.5
 python-dateutil==2.9.0.post0
+python-decouple==3.8
 redis==7.1.0
 requests==2.32.5
 rsa==4.9.1
