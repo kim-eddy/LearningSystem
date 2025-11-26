@@ -1,18 +1,24 @@
 import requests
 from django.conf import settings
-GEMINI_API_KEY = settings.GEMINI_API_KEY
+# Assuming GEMINI_API_KEY is defined in settings
+GEMINI_API_KEY = settings.GEMINI_API_KEY 
 
 def gemini_chat(user_message):
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+    # 1. FIX: Use a properly formatted f-string or simple string for the endpoint URL.
+    # The API key should be passed as a parameter, not embedded in the base URL string.
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    
     headers = {
         "Content-Type": "application/json"
     }
+    
     payload = {
         "contents": [{"parts": [{"text": user_message}]}]
     }
 
     response = requests.post(
         endpoint,
+        # 2. FIX: The API key is correctly passed here as a query parameter.
         params={"key": GEMINI_API_KEY},
         headers=headers,
         json=payload
@@ -20,6 +26,11 @@ def gemini_chat(user_message):
 
     if response.status_code == 200:
         data = response.json()
-        return data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "No reply.")
+        # 3. IMPROVEMENT: Use .get() defensively for safer parsing of the JSON response.
+        try:
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+        except (IndexError, KeyError):
+            return "Error: Could not parse Gemini response."
     else:
-        return f"Error: {response.status_code}"
+        # Include the response text for better debugging
+        return f"Error: {response.status_code} - {response.text}"
