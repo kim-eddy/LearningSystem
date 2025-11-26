@@ -31,7 +31,7 @@ def fetch_mysql_data():
         database="railway",
     )
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT title, description, source, url, topic_id FROM MyProject_resources")
+    cursor.execute("SELECT title, description, url, topic_id FROM MyProject_resources")
     data = cursor.fetchall()
     conn.close()
     return data
@@ -42,7 +42,7 @@ def fetch_mongo_data():
 
     db = client["LearningSystem"]
     collection = db["resources"]
-    results = collection.find({}, {"topic_id": 1, "title": 1, "description": 1, "source": 1, "url": 1})
+    results = collection.find({}, {"topic_id": 1, "title": 1, "description": 1,  "url": 1})
     return list(results)
 
 
@@ -97,7 +97,7 @@ def get_user_profile(user):
 def format_data_for_gemini(resources):
     formatted = ""
     for item in resources:
-        formatted += f"\n Title: {item.get('title')}\n Description: {item.get('description')}\n Source: {item.get('source')}\n URL: {item.get('url')}\n topic_id:{item.get('topic_id')}\n"
+        formatted += f"\n Title: {item.get('title')}\n Description: {item.get('description')}\n  URL: {item.get('url')}\n topic_id:{item.get('topic_id')}\n"
     return formatted
 
 
@@ -152,7 +152,7 @@ Materials:
                 cursor.execute("""
                     INSERT INTO MyProject_resources (title, description, source, url, topic_id)
                     VALUES (%s, %s, %s, %s)
-                """, (item['title'], item['description'], item['source'], item['url'], item['topic_id']))
+                """, (item['title'], item['description'], item['url'], item['topic_id']))
             conn.commit()
             conn.close()
             print(" Saved filtered results to MySQL")
@@ -167,7 +167,7 @@ Materials:
                 r.hset(key, mapping={
                     "title": item['title'],
                     "description": item['description'],
-                    "source": item['source'],
+                    
                     "url": item['url'],
                     
                 })
@@ -233,9 +233,9 @@ Materials:
                 cursor.execute("SELECT COUNT(*) FROM MyProject_resources WHERE title = %s AND url = %s", (item['title'], item['url']))
                 if cursor.fetchone()[0] == 0:
                     cursor.execute("""
-                        INSERT INTO MyProject_resources (title, description, source, url, topic_id)
+                        INSERT INTO MyProject_resources (title, description, url, topic_id)
                         VALUES (%s, %s, %s, %s, %s)
-                    """, (item['title'], item['description'], item['source'], item['url'], item['topic_id']))
+                    """, (item['title'], item['description'], item['url'], item['topic_id']))
             conn.commit()
             conn.close()
             print("  Saved to MySQL (deduplicated)")
