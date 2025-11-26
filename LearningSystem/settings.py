@@ -24,9 +24,9 @@ SECRET_KEY = 'vat%j+gj)$69y%#%%e(1l89(e@1)&dd$=wa)b$vv9+qre(vx4z'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [https://learningsystem-2i38.onrender.com]
 
 
 # Application definition
