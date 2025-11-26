@@ -293,3 +293,12 @@ class Leaderboard(models.Model):
 
     def __str__(self):
         return f"{self.student.user.username} - Score: {self.score} - Rank: {self.rank}"
+
+
+class Resources(models.Model):
+    title = models.CharField(max_length=255)
+    url = models.URLField(blank=True)
+    description = models.TextField()
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
