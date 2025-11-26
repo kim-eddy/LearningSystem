@@ -29,7 +29,7 @@ def fetch_mysql_data():
         database="railway",
     )
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT title, description, source, url, topic_id FROM resources")
+    cursor.execute("SELECT title, description, source, url, topic_id FROM MyProject_resources")
     data = cursor.fetchall()
     conn.close()
     return data
@@ -148,7 +148,7 @@ Materials:
             cursor = conn.cursor()
             for item in results:
                 cursor.execute("""
-                    INSERT INTO resources (title, description, source, url, topic_id)
+                    INSERT INTO MyProject_resources (title, description, source, url, topic_id)
                     VALUES (%s, %s, %s, %s)
                 """, (item['title'], item['description'], item['source'], item['url'], item['topic_id']))
             conn.commit()
@@ -228,10 +228,10 @@ Materials:
             )
             cursor = conn.cursor()
             for item in results:
-                cursor.execute("SELECT COUNT(*) FROM resources WHERE title = %s AND url = %s", (item['title'], item['url']))
+                cursor.execute("SELECT COUNT(*) FROM MyProject_resources WHERE title = %s AND url = %s", (item['title'], item['url']))
                 if cursor.fetchone()[0] == 0:
                     cursor.execute("""
-                        INSERT INTO resources (title, description, source, url, topic_id)
+                        INSERT INTO MyProject_resources (title, description, source, url, topic_id)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (item['title'], item['description'], item['source'], item['url'], item['topic_id']))
             conn.commit()
