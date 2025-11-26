@@ -55,7 +55,7 @@ user = None  # Placeholder for user object, to be used in views where needed
 
 
 # Configure Gemini
-genai.configure(api_key="AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk")
+genai.configure(api_key="AIzaSyAx4to8JSa0k9iuIALEky4S0WFIU1Z01xo")
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 @csrf_exempt
@@ -422,7 +422,7 @@ def assessment_detail(request, assessment_id=None):
             ...
             """
             try:
-                GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk"
+                GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAx4to8JSa0k9iuIALEky4S0WFIU1Z01xo"
                 payload = {
                     "contents": [{"parts": [{"text": prompt}]}]
                 }
@@ -639,7 +639,6 @@ def save_student_score(user, topic_id, score):
             VALUES (%s, %s, %s)
         """, [user.id, topic_id, score])
 
-
 @login_required
 def learning_path_view(request):
     user = request.user
@@ -649,7 +648,7 @@ def learning_path_view(request):
 
     # MongoDB setup
     from pymongo import MongoClient
-    mongo_client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+    mongo_client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
     mongo_collection = mongo_client["LearningSystem"]["scraped_content"]
 
     for entry in path_entries:
@@ -661,7 +660,6 @@ def learning_path_view(request):
 
         # Fallback to Gemini if no resources found
         if not resources:
-            # Check if an AI-generated resource already exists for this topic/user
             ai_resource = mongo_collection.find_one({
                 "title": f"AI-generated: {entry.topic.name}",
                 "user_id": user.id
@@ -671,10 +669,8 @@ def learning_path_view(request):
             else:
                 prompt = f"Provide a concise, student-friendly summary and a practical example for the topic '{entry.topic.name}' in the course '{entry.course.title}'."
                 try:
-                    GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAmYRNOr1FakFQQaZ_zWRWAuZNcHRU3Vsk"
-                    payload = {
-                        "contents": [{"parts": [{"text": prompt}]}]
-                    }
+                    GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAx4to8JSa0k9iuIALEky4S0WFIU1Z01xo"
+                    payload = {"contents": [{"parts": [{"text": prompt}]}]}
                     response = requests.post(GEMINI_API_URL, json=payload)
                     response.raise_for_status()
                     gemini_text = response.json()['candidates'][0]['content']['parts'][0]['text']
@@ -695,17 +691,21 @@ def learning_path_view(request):
                         "description": f"Could not fetch content from Gemini: {e}"
                     }]
 
+        # Convert markdown for this entry only
+        for res in resources:
+            try:
+                res["description"] = markdown.markdown(res.get("description", ""))
+            except Exception as e:
+                logger.warning(f"Markdown conversion failed: {e}")
+                res["description"] = "<p><em>Failed to load content.</em></p>"
+
         learning_path.append({
             "topic": entry.topic,      # Pass the Topic object
             "resources": resources
         })
-    for res in resources:
-        try:
-            res["description"] = markdown.markdown(res.get("description", ""))
-        except Exception as e:
-            logger.warning(f"Markdown conversion failed: {e}")
-            res["description"] = "<p><em>Failed to load content.</em></p>"
+
     return render(request, 'learning_path.html', {"learning_path": learning_path})
+
 
 @login_required
 def learning_resources(request):
@@ -714,7 +714,7 @@ def learning_resources(request):
     selected_topic = request.GET.get('topic')    # needed for filtering
 
     # Connect to MongoDB
-    client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+    client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
     db = client["LearningSystem"]
     collection = db["scraped_content"]
 
@@ -745,7 +745,7 @@ def study_topic_view(request, topic_id):
     topic = get_object_or_404(Topic, id=topic_id)
 
     # MongoDB connection
-    client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+    client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
     db = client["LearningSystem"]
     collection = db["scraped_content"]
 

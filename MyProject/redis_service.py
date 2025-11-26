@@ -2,8 +2,8 @@ import redis
 
 # Hardcoded Redis connection (for testing)
 r = redis.StrictRedis(
-    host='redis.railway.internal',
-    port=6379,
+    host='mainline.proxy.rlwy.net',
+    port=11017,
     password='LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf',
     db=0,
     decode_responses=True

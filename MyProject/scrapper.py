@@ -77,7 +77,7 @@ if __name__ == "__main__":
     topics = ["intro", "syntax", "variables"]  # Example topics
     data = scrape_topic_data(topics)
     if data:
-        mongo_client = MongoClient("mongodb://emmanuel:K7154muhell@localhost:27017/?authSource=admin")
+        mongo_client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
         mongo_db = mongo_client["LearningSystem"]
         mongo_collection = mongo_db["scraped_content"]
         mongo_collection.insert_many(data)
