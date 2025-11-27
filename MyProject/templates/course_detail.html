@@ -113,6 +113,55 @@
         <p>End Date: {{ course.end_date }}</p>
         <p>School: {{ course.school.name }}</p>
 
+        {% if materials %}
+            <section style="margin-top: 2rem;">
+                <h3>Course Materials</h3>
+                <ul>
+                    {% for m in materials %}
+                        <li style="margin-bottom: 1rem;">
+                            <strong>{{ m.title }}</strong> ({{ m.get_material_type_display }})<br>
+                            {% if m.description %}
+                                <div>{{ m.description }}</div>
+                            {% endif %}
+
+                            {% if m.material_type == 'video' %}
+                                <video controls style="max-width: 100%; margin-top: 0.5rem;">
+                                    <source src="{{ m.file.url }}" type="video/mp4">
+                                    {% if m.captions_file %}
+                                        <track kind="captions" src="{{ m.captions_file.url }}" srclang="en" label="English captions" default>
+                                    {% endif %}
+                                    Your browser does not support the video tag.
+                                </video>
+                            {% elif m.material_type == 'audio' %}
+                                <audio controls style="width: 100%; margin-top: 0.5rem;">
+                                    <source src="{{ m.file.url }}">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            {% endif %}
+
+                            {% if m.transcript %}
+                                {% if student_profile.prefers_transcripts or student_profile.needs_captions %}
+                                    <section aria-label="Transcript" style="margin-top: 0.5rem;">
+                                        <h4 style="font-size: 1rem; margin: 0 0 0.25rem 0;">Transcript</h4>
+                                        <div class="material-transcript" aria-label="Transcript for {{ m.title }}">
+                                            {{ m.transcript }}
+                                        </div>
+                                    </section>
+                                {% else %}
+                                    <details style="margin-top: 0.5rem;">
+                                        <summary>Transcript</summary>
+                                        <div class="material-transcript" aria-label="Transcript for {{ m.title }}">
+                                            {{ m.transcript }}
+                                        </div>
+                                    </details>
+                                {% endif %}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
         {% if user.is_authenticated %}
             {% if user == course.instructor %}
                 <form method="post" action="{% url 'edit_course' course.id %}">

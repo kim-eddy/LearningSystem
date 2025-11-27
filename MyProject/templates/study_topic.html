@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Study Topic - {{ topic.name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
     <style>
         body {
             background: #f4f6fb;
@@ -84,40 +85,47 @@
 </head>
 <body>
 <div class="container">
-    <h2>{{ topic.name }}</h2>
+    <div class="tts-controls" aria-label="Text to speech controls" data-mode-only="blind">
+        <button type="button" onclick="startReading('#tts-topic-content')">🔊 Listen to this topic</button>
+        <button type="button" onclick="stopReading()">⏹ Stop</button>
+    </div>
 
-    <strong>Topic:</strong>
-    <a class="topic-link" href="{% url 'study_topic' topic_id=topic.id %}">{{ topic.name }}</a>
+    <div id="tts-topic-content">
+        <h2>{{ topic.name }}</h2>
 
-    {% for r in resources %}
-      <div class="card">
-        <h3>{{ r.title }}</h3>
-        {% if r.url and r.url != " " and r.url != "#" %}
-          <p><a href="{{ r.url }}" target="_blank">Visit Resource</a></p>
+        <strong>Topic:</strong>
+        <a class="topic-link" href="{% url 'study_topic' topic_id=topic.id %}">{{ topic.name }}</a>
+
+        {% for r in resources %}
+          <div class="card">
+            <h3>{{ r.title }}</h3>
+            {% if r.url and r.url != " " and r.url != "#" %}
+              <p><a href="{{ r.url }}" target="_blank">Visit Resource</a></p>
+            {% endif %}
+            <div class="resource-desc" aria-label="Resource transcript">{{ r.description|safe }}</div>
+          </div>
+        {% empty %}
+          <p>No resources found for this topic.</p>
+        {% endfor %}
+
+        <!--  Mark as Completed Form -->
+        {% if progress and progress.progress_percentage == 100 %}
+          <p class="status-completed"><strong>Status:</strong>  Completed</p>
+        {% else %}
+          <form method="POST" action="{% url 'mark_topic_completed' topic.id %}">
+            {% csrf_token %}
+            <button class="btn btn-success">Mark as Completed</button>
+          </form>
+          {% if progress %}
+            <p class="progress-info"><strong>Current Progress:</strong> {{ progress.progress_percentage }}%</p>
+          {% endif %}
         {% endif %}
-        <div>{{ r.description|safe }}</div>
-      </div>
-    {% empty %}
-      <p>No resources found for this topic.</p>
-    {% endfor %}
 
-    <!--  Mark as Completed Form -->
-    {% if progress and progress.progress_percentage == 100 %}
-      <p class="status-completed"><strong>Status:</strong>  Completed</p>
-    {% else %}
-      <form method="POST" action="{% url 'mark_topic_completed' topic.id %}">
-        {% csrf_token %}
-        <button class="btn btn-success">Mark as Completed</button>
-      </form>
-      {% if progress %}
-        <p class="progress-info"><strong>Current Progress:</strong> {{ progress.progress_percentage }}%</p>
-      {% endif %}
-    {% endif %}
+        <button id="updateProgressBtn" class="btn btn-primary">Next</button>
 
-    <button id="updateProgressBtn" class="btn btn-primary">Next</button>
-
-    <br>
-    <a class="back-link" href="{% url 'learning_path_view' %}">&larr; Learning Path</a>
+        <br>
+        <a class="back-link" href="{% url 'learning_path_view' %}">&larr; Learning Path</a>
+    </div>
 </div>
 
 <script>
@@ -139,5 +147,10 @@ document.getElementById("updateProgressBtn").addEventListener("click", function 
     });
 });
 </script>
+<script>
+    // Expose the current user's language code for the shared TTS helper
+    window.USER_LANGUAGE_CODE = "{{ user_language|default:'en' }}";
+</script>
+<script src="{% static 'MyProject/js/tts.js' %}"></script>
 </body>
 </html>

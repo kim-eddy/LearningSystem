@@ -217,14 +217,34 @@
             <div class="profile">
                 <form method="POST">
                 {% csrf_token %}
-                <h2>Contact Info</h2>
+                <h2>Contact & Accessibility</h2>
                 <label for="phone_number">Phone Number:</label>
                 <input type="text" name="phone_number" id="phone_number" value="{{ student_profile.phone_number }}"><br><br>
 
                 <label for="email">Email:</label>
                 <input type="email" name="email" id="email" value="{{ student_profile.email }}"><br><br>
 
-                <button type="submit">Update Contact Info</button>
+                <fieldset style="margin-top: 1rem;">
+                    <legend>Accessibility Preferences</legend>
+                    <div>
+                        <label for="accessibility_mode">Accessibility mode:</label>
+                        <select id="accessibility_mode" name="accessibility_mode">
+                            <option value="normal" {% if student_profile.accessibility_mode == 'normal' %}selected{% endif %}>Normal</option>
+                            <option value="blind" {% if student_profile.accessibility_mode == 'blind' %}selected{% endif %}>Blind (screen reader / TTS)</option>
+                            <option value="deaf" {% if student_profile.accessibility_mode == 'deaf' %}selected{% endif %}>Deaf / hard of hearing</option>
+                        </select>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="needs_captions" name="needs_captions" {% if student_profile.needs_captions %}checked{% endif %}>
+                        <label for="needs_captions">Always show captions for audio/video when available</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="prefers_transcripts" name="prefers_transcripts" {% if student_profile.prefers_transcripts %}checked{% endif %}>
+                        <label for="prefers_transcripts">Prefer full text transcripts alongside media</label>
+                    </div>
+                </fieldset>
+
+                <button type="submit">Save Profile</button>
                 </form>
             </div>
         </div>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - Learning System</title>
+    {% load static %}
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -91,11 +92,22 @@
     </header>
 
     <main>
-        <h2>Welcome to the Learning System</h2>
-        <p class="welcome-text">
-            Explore courses, track your progress, and enhance your skills with our comprehensive learning platform.
-            Start your journey by selecting a course from the list or discovering new learning paths tailored for you.
-        </p>
+        <div class="tts-controls" aria-label="Text to speech controls" data-mode-only="blind" style="text-align:right; margin-bottom: 1rem;">
+            <button type="button" onclick="startReading('#tts-home')">🔊 Listen to this page</button>
+            <button type="button" onclick="stopReading()">⏹ Stop</button>
+        </div>
+        <div id="tts-home">
+            <h2>Welcome to the Learning System</h2>
+            <p class="welcome-text">
+                Explore courses, track your progress, and enhance your skills with our comprehensive learning platform.
+                Start your journey by selecting a course from the list or discovering new learning paths tailored for you.
+            </p>
+        </div>
     </main>
+    <script>
+        // Expose the current user's language code for the shared TTS helper
+        window.USER_LANGUAGE_CODE = "{{ user_language|default:'en' }}";
+    </script>
+    <script src="{% static 'MyProject/js/tts.js' %}"></script>
 </body>
 </html>

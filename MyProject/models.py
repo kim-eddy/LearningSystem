@@ -39,6 +39,11 @@ class Student_Profile(models.Model):
         ('ki', 'Kikuyu'),
         ('so', 'Kisomali'),
     ]
+    ACCESSIBILITY_MODES = [
+        ('normal', 'Normal'),
+        ('blind', 'Blind'),
+        ('deaf', 'Deaf'),
+    ]
     
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
@@ -53,6 +58,15 @@ class Student_Profile(models.Model):
         default='en',
         help_text='Select your preferred language for the platform'
     )
+    # Accessibility preferences
+    accessibility_mode = models.CharField(
+        max_length=10,
+        choices=ACCESSIBILITY_MODES,
+        default='normal',
+        help_text='Preferred accessibility mode: normal, blind, or deaf',
+    )
+    needs_captions = models.BooleanField(default=False)
+    prefers_transcripts = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
@@ -76,6 +90,8 @@ class Materials(models.Model):
      file = models.FileField(upload_to='materials/')
      course = models.ForeignKey(Course, on_delete=models.CASCADE)
      topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+     transcript = models.TextField(blank=True, null=True, help_text='Optional transcript text for audio/video materials')
+     captions_file = models.FileField(upload_to='captions/', blank=True, null=True, help_text='Optional caption file (e.g. WebVTT) for video/audio')
      def __str__(self):
          return self.title      
 class Student_Progress(models.Model):

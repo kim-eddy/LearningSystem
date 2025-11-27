@@ -114,9 +114,23 @@ class StudentProfileUpdateForm(forms.ModelForm):
         required=False
     )
 
+    accessibility_mode = forms.ChoiceField(
+        choices=Student_Profile.ACCESSIBILITY_MODES,
+        required=False,
+        label="Accessibility mode",
+    )
+    needs_captions = forms.BooleanField(
+        required=False,
+        label="Always show captions for audio/video when available",
+    )
+    prefers_transcripts = forms.BooleanField(
+        required=False,
+        label="Prefer full text transcripts alongside media",
+    )
+
     class Meta:
         model = Student_Profile
-        fields = ['phone_number', 'email', 'interests']
+        fields = ['phone_number', 'email', 'interests', 'accessibility_mode', 'needs_captions', 'prefers_transcripts']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -127,6 +141,9 @@ class StudentProfileUpdateForm(forms.ModelForm):
     def save(self, commit=True):
         profile = super().save(commit=False)
         profile.interests = self.cleaned_data.get('interests', [])
+        profile.accessibility_mode = self.cleaned_data.get('accessibility_mode') or profile.accessibility_mode
+        profile.needs_captions = self.cleaned_data.get('needs_captions', False)
+        profile.prefers_transcripts = self.cleaned_data.get('prefers_transcripts', False)
         if commit:
             profile.save()
         return profile

@@ -143,4 +143,3 @@ LOGIN_URL = '/accounts/login/'
 CELERY_BROKER_URL = 'redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@mainline.proxy.rlwy.net:11017'
 CELERY_RESULT_BACKEND = 'redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@mainline.proxy.rlwy.net:11017'
 MONGO_URI = 'mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079'
-

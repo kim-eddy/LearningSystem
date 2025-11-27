@@ -1,0 +1,65 @@
+{% load static %}
+<script>
+  // Global TTS setup; language comes from context
+  window.USER_LANGUAGE_CODE = "{{ user_language|default:'en' }}";
+</script>
+<script src="{% static 'MyProject/js/tts.js' %}"></script>
+
+<div id="accessibility-mode-widget"
+     style="position: fixed; bottom: 1rem; left: 1rem; z-index: 9999; background: #fff; border-radius: 8px; padding: 0.5rem 0.75rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 0.9rem;">
+  <label for="accessibility-mode-select" style="margin-right: 0.5rem;">Mode:</label>
+  <select id="accessibility-mode-select" onchange="setAccessibilityMode(this.value)">
+    <option value="normal">Normal</option>
+    <option value="blind">Blind</option>
+    <option value="deaf">Deaf</option>
+  </select>
+</div>
+
+<div class="accessibility-mode-descriptions" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;">
+  <p data-mode="normal">Standard visual interface without additional screen-reader guidance.</p>
+  <p data-mode="blind">AI-powered features for text-to-speech, designed to be used with screen readers and keyboard navigation.</p>
+  <p data-mode="deaf">Optimized for transcripts and on-screen text rather than audio.</p>
+</div>
+
+<div class="tts-global-controls" aria-label="Text to speech controls"
+     data-mode-only="blind"
+     style="position: fixed; bottom: 1rem; right: 1rem; z-index: 9999;">
+  <button type="button" onclick="startReading('body')">
+    🔊 Listen to this page
+  </button>
+  <button type="button" onclick="stopReading()">
+    ⏹ Stop
+  </button>
+</div>
+
+<script>
+  const ACCESS_MODE_KEY = 'accessibility_mode';
+
+  function applyAccessibilityMode(mode) {
+    try { localStorage.setItem(ACCESS_MODE_KEY, mode); } catch (e) {}
+
+    document.querySelectorAll('[data-mode-only="blind"]').forEach(el => {
+      el.style.display = (mode === 'blind') ? '' : 'none';
+    });
+
+    document.querySelectorAll('[data-mode]').forEach(el => {
+      el.style.display = (el.getAttribute('data-mode') === mode) ? '' : 'none';
+    });
+  }
+
+  function setAccessibilityMode(mode) {
+    applyAccessibilityMode(mode);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    let mode = '{{ student_profile.accessibility_mode|default:"normal" }}';
+    try {
+      mode = localStorage.getItem(ACCESS_MODE_KEY) || mode || 'normal';
+    } catch (e) {}
+    const select = document.getElementById('accessibility-mode-select');
+    if (select) select.value = mode;
+    applyAccessibilityMode(mode);
+  });
+
+  window.setAccessibilityMode = setAccessibilityMode;
+</script>

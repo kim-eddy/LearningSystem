@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 <style>
@@ -171,34 +172,40 @@
 </div>
 
 <div class="main-content">
-    <h2>Learning Resources</h2>
-    {% if selected_course and selected_topic %}
-        <h3>{{ selected_course }} → {{ selected_topic }}</h3>
-        {% with topics=grouped_resources|get:selected_course %}
-            {% with res_list=topics|get:selected_topic %}
-                {% if res_list %}
-                    {% for res in res_list %}
-                        <div class="resource-card">
-                            <div class="resource-title">{{ res.title|default_if_none:res.topic }}</div>
-                            <div class="resource-source"><strong>Source:</strong> {{ res.source|default:"Unknown" }}</div>
-                            <div class="resource-desc">{{ res.description|safe }}</div>
+    <div class="tts-controls" aria-label="Text to speech controls" data-mode-only="blind">
+        <button type="button" onclick="startReading('#tts-content')">🔊 Listen to this page</button>
+        <button type="button" onclick="stopReading()">⏹ Stop</button>
+    </div>
 
+    <div id="tts-content">
+        <h2>Learning Resources</h2>
+        {% if selected_course and selected_topic %}
+            <h3>{{ selected_course }} → {{ selected_topic }}</h3>
+            {% with topics=grouped_resources|get:selected_course %}
+                {% with res_list=topics|get:selected_topic %}
+                    {% if res_list %}
+                        {% for res in res_list %}
+                            <div class="resource-card">
+                                <div class="resource-title">{{ res.title|default_if_none:res.topic }}</div>
+                                <div class="resource-source"><strong>Source:</strong> {{ res.source|default:"Unknown" }}</div>
+                                <div class="resource-desc" aria-label="Resource transcript">{{ res.description|safe }}</div>
 
-                            {% if res.url %}
-                                <a class="resource-link" href="{{ res.url }}" target="_blank">Visit Source</a>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="no-resources">No resources found for this topic.</div>
-                {% endif %}
+                                {% if res.url %}
+                                    <a class="resource-link" href="{{ res.url }}" target="_blank">Visit Source</a>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-resources">No resources found for this topic.</div>
+                    {% endif %}
+                {% endwith %}
             {% endwith %}
-        {% endwith %}
-    {% elif selected_course %}
-        <div class="no-resources">Select a topic to view resources.</div>
-    {% else %}
-        <div class="no-resources">Select a course and topic to view resources.</div>
-    {% endif %}
+        {% elif selected_course %}
+            <div class="no-resources">Select a topic to view resources.</div>
+        {% else %}
+            <div class="no-resources">Select a course and topic to view resources.</div>
+        {% endif %}
+    </div>
 </div>
 
 <script>
@@ -215,4 +222,9 @@
         });
     }
 </script>
+<script>
+    // Expose the current user's language code for the shared TTS helper
+    window.USER_LANGUAGE_CODE = "{{ user_language|default:'en' }}";
+</script>
+<script src="{% static 'MyProject/js/tts.js' %}"></script>
 {% endblock %}
