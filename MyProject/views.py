@@ -356,27 +356,26 @@ def assessment_detail(request, assessment_id=None):
     topics = Topic.objects.filter(course=course)
 
     if request.method == 'POST':
-        # Evaluate answers
-        # Fetch all AI_Assessment questions for this user/course/grade (all topics)
+        # Evaluate AI assessment answers
         ai_questions = AI_Assessment.objects.filter(
             user=user, course=course, grade_level=grade.id if hasattr(grade, 'id') else grade
         ).order_by('-created_at')
+
         user_answers = []
         score = 0
         total = len(ai_questions)
+
         for idx, q in enumerate(ai_questions):
             ans = request.POST.get(f'answers_{idx}')
             user_answers.append({'question': q.question, 'selected': ans, 'correct': q.correct_answer})
-            # Save selected answer
             q.selected_answer = ans
             q.save()
             if ans and ans.strip() == q.correct_answer.strip():
                 score += 1
+
         percentage = round((score / total) * 100, 2) if total else 0
 
-        # Advanced ordering: analyze and order topics
-        # For AI assessments, analyze performance using ai_questions and user_answers
-        # If your analyzer expects an object with .topic and .correct_answer, you can adapt it:
+        # Analyze performance by topic
         topic_stats = {}
         for idx, q in enumerate(ai_questions):
             topic_id = q.topic.id if q.topic else None
@@ -390,61 +389,59 @@ def assessment_detail(request, assessment_id=None):
             if is_correct:
                 topic_stats[topic_id]['correct'] += 1
 
-        topic_scores = {}
-        for topic_id, stats in topic_stats.items():
-            topic_scores[topic_id] = stats['correct'] / stats['total'] if stats['total'] else 0.0
+        topic_scores = {tid: stats['correct'] / stats['total'] for tid, stats in topic_stats.items()}
 
         all_topics = Topic.objects.filter(course=course)
         ordered_topics = sorted(
             all_topics,
-            key=lambda t: topic_scores.get(t.id, 1)  # topics not assessed are treated as strongest (score=1)
+            key=lambda t: topic_scores.get(t.id, 1)  # topics not assessed treated as strongest
         )
 
+        # Scrape, filter, and build learning path
         scraped = scrape_topic_data([t.name for t in ordered_topics])
         filtered = filter_resources(scraped)
         build_learning_path(student_profile, course, ordered_topics, filtered)
 
         return redirect('learning_path_view')
+
     else:
         all_questions = []
+
         for topic in topics:
             topic_name = topic.name
             prompt = f"""
-            You are an expert educational content generator. Create a 5-question multiple choice quiz for a grade {grade} student in the course '{course_title}' on the topic: '{topic_name}'.
+You are an expert educational content generator. Create a 5-question multiple choice quiz for a grade {grade} student in the course '{course_title}' on the topic: '{topic_name}'.
 
-            For each question, strictly use the following format (one line per question):
-            question|option1,option2,option3,option4|correct_option
+For each question, strictly use the following format (one line per question):
+question|option1,option2,option3,option4|correct_option
 
-            - Each question must have exactly 4 options, separated by commas.
-            - The correct_option must exactly match one of the options.
-            - Do not number the questions or add any extra text or explanation.
-            - Only output the 5 lines, one for each question, in the format above.
-            - Example:
-            What is 2+2?|3,4,5,6|4
-            ...
-            """
-                GEMINI_API_URL = (
-    f"https://generativelanguage.googleapis.com/v1beta/models/"
-    f"gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
-)
+- Each question must have exactly 4 options, separated by commas.
+- The correct_option must exactly match one of the options.
+- Do not number the questions or add any extra text or explanation.
+- Only output the 5 lines, one for each question, in the format above.
+"""
 
-                    "contents": [{"parts": [{"text": prompt}]}]
-                }
+            GEMINI_API_URL = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+            )
+
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+            try:
                 response = requests.post(GEMINI_API_URL, json=payload)
                 response.raise_for_status()
-
                 generated = response.json()['candidates'][0]['content']['parts'][0]['text']
 
                 for line in generated.strip().split('\n'):
                     if '|' in line:
                         parts = line.split('|')
                         if len(parts) == 3:
-                            q, opts, correct = parts
+                            q_text, opts, correct = parts
                             options = [o.strip() for o in opts.split(',')]
-                            question_text = q.strip()
+                            question_text = q_text.strip()
                             correct_answer = correct.strip()
 
-                            # Save to DB
                             AI_Assessment.objects.create(
                                 user=user,
                                 course=course,
@@ -464,6 +461,7 @@ def assessment_detail(request, assessment_id=None):
                             })
                         else:
                             logger.warning(f"Skipping malformed line in Gemini output: {line}")
+
             except Exception as e:
                 logger.error(f"Gemini API Error for topic {topic_name}: {e}")
 
@@ -919,4 +917,5 @@ def leaderboard_view(request):
     leaderboard = Leaderboard.objects.order_by('-score')[:10]  # Top 10 users
 
     return render(request, 'leaderboard.html', {'leaderboard': leaderboard})
+
 
