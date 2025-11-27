@@ -69,6 +69,7 @@
             margin-left: 15px;
             font-size: 14px;
             color: var(--sidebar-subheading-color);
+            list-style-type: none;
         }
 
         .topic-block {
@@ -130,6 +131,21 @@
         .theme-select {
             display: none;
         }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--sidebar-border-color);
+            }
+            .main-content {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -138,9 +154,11 @@
         <h2>Courses</h2>
         {% for course, topics in grouped_resources.items %}
             <h3>{{ course }}</h3>
+            <ul>
             {% for topic, _ in topics.items %}
                 <h4>• {{ topic }}</h4>
             {% endfor %}
+            </ul>
         {% endfor %}
     </div>
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
