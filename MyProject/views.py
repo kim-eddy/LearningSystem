@@ -422,8 +422,11 @@ def assessment_detail(request, assessment_id=None):
             What is 2+2?|3,4,5,6|4
             ...
             """
-                GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
-                payload = {
+                GEMINI_API_URL = (
+    f"https://generativelanguage.googleapis.com/v1beta/models/"
+    f"gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+)
+
                     "contents": [{"parts": [{"text": prompt}]}]
                 }
                 response = requests.post(GEMINI_API_URL, json=payload)
@@ -915,3 +918,4 @@ def leaderboard_view(request):
     leaderboard = Leaderboard.objects.order_by('-score')[:10]  # Top 10 users
 
     return render(request, 'leaderboard.html', {'leaderboard': leaderboard})
+
