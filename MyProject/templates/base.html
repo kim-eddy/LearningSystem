@@ -1,8 +1,7 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <title>Learning Resources</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
@@ -38,9 +37,15 @@
             margin: 0;
             padding: 0;
             display: flex;
-            height: 100vh;
+            flex-direction: column; /* Changed to column to accommodate nav */
+            min-height: 100vh; /* Changed height to min-height */
             background-color: var(--bg-color);
             color: var(--text-color);
+        }
+
+        .container-wrapper { /* New wrapper for sidebar and main-content */
+            display: flex;
+            flex: 1; /* Allow it to take remaining space */
         }
 
         .sidebar {
@@ -133,7 +138,7 @@
         }
 
         @media (max-width: 768px) {
-            body {
+            .container-wrapper {
                 flex-direction: column;
             }
             .sidebar {
@@ -149,60 +154,40 @@
     </style>
 </head>
 <body>
+    <nav class="bg-gray-800 p-4 flex justify-between items-center">
+        <div class="text-white text-lg font-bold">LearningSystem</div>
+        <ul class="flex space-x-4">
+            <li><a href="/accounts/login/" class="hidden md:inline-block px-4 py-2 text-white hover:text-yellow-300 font-medium">Login</a></li>
+            <li><a href="/signup/" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition duration-300">
+                Get Started
+            </a>
+            <button class="md:hidden text-white focus:outline-none">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </li>
+        </ul>
+    </nav>
 
-    <div class="sidebar">
-        <h2>Courses</h2>
-        {% for course, topics in grouped_resources.items %}
-            <h3>{{ course }}</h3>
-            <ul>
-            {% for topic, _ in topics.items %}
-                <h4>• {{ topic }}</h4>
+    <div class="container-wrapper">
+        <div class="sidebar">
+            <h2>Courses</h2>
+            {% for course, topics in grouped_resources.items %}
+                <h3>{{ course }}</h3>
+                <ul>
+                {% for topic, _ in topics.items %}
+                    <h4>• {{ topic }}</h4>
+                {% endfor %}
+                </ul>
             {% endfor %}
-            </ul>
-        {% endfor %}
+        </div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+            <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+                <path d="M8 0a.5.5 0 0 1 .5.5V2a.5.5 0 0 1-1 0V.5A.5.5 0 0 1 8 0zm0 14a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-1 0V14.5a.5.5 0 0 1 .5-.5zm8-6a.5.5 0 0 1-.5.5H14a.5.5 0 0 1 0-1h1.5a.5.5 0 0 1 .5.5zM2 .5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 .5zm11.657 10.657a.5.5 0 0 1 0 .707l-1.06 1.06a.5.5 0 1 1-.707-.707l1.06-1.06a.5.5 0 0 1 .707 0zM3.403 3.403a.5.5 0 0 1 0 .707L2.343 5.17a.5.5 0 1 1-.707-.707l1.06-1.06a.5.5 0 0 1 .707 0zm10.95-1.06a.5.5 0 0 1-.707 0L12.586 2.28a.5.5 0 1 1 .707-.707l1.06 1.06a.5.5 0 0 1 0 .707zM3.403 12.597a.5.5 0 0 1-.707 0L1.636 11.535a.5.5 0 1 1 .707-.707l1.06 1.06a.5.5 0 0 1 0 .707z"/>
+            </svg>
+        </button>
+    
+        <div class="main-content">
+            {% block content %}{% endblock %}
+        </div>
     </div>
-    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
-        <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
-            <path d="M8 0a.5.5 0 0 1 .5.5V2a.5.5 0 0 1-1 0V.5A.5.5 0 0 1 8 0zm0 14a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-1 0V14.5a.5.5 0 0 1 .5-.5zm8-6a.5.5 0 0 1-.5.5H14a.5.5 0 0 1 0-1h1.5a.5.5 0 0 1 .5.5zM2 .5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 .5zm11.657 10.657a.5.5 0 0 1 0 .707l-1.06 1.06a.5.5 0 1 1-.707-.707l1.06-1.06a.5.5 0 0 1 .707 0zM3.403 3.403a.5.5 0 0 1 0 .707L2.343 5.17a.5.5 0 1 1-.707-.707l1.06-1.06a.5.5 0 0 1 .707 0zm10.95-1.06a.5.5 0 0 1-.707 0L12.586 2.28a.5.5 0 1 1 .707-.707l1.06 1.06a.5.5 0 0 1 0 .707zM3.403 12.597a.5.5 0 0 1-.707 0L1.636 11.535a.5.5 0 1 1 .707-.707l1.06 1.06a.5.5 0 0 1 0 .707z"/>
-        </svg>
-    </button>
-
-    <div class="main-content">
-        {% block content %}{% endblock %}
-    </div>
-   {% include "chat.html" %}
-
-<script>
-    (function() {
-        const toggleButton = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const rootElement = document.documentElement;
-
-        // Load saved theme from localStorage
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        rootElement.setAttribute('data-theme', savedTheme);
-        updateIcon(savedTheme);
-
-        toggleButton.addEventListener('click', () => {
-            let currentTheme = rootElement.getAttribute('data-theme');
-            let newTheme = currentTheme === 'light' ? 'focus' : 'light';
-            rootElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateIcon(newTheme);
-        });
-
-        function updateIcon(theme) {
-            if (theme === 'light') {
-                themeIcon.innerHTML = '<path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M8 0a.5.5 0 0 1 .5.5V2a.5.5 0 0 1-1 0V.5A.5.5 0 0 1 8 0zm0 14a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-1 0V14.5a.5.5 0 0 1 .5-.5zm8-6a.5.5 0 0 1-.5.5H14a.5.5 0 0 1 0-1h1.5a.5.5 0 0 1 .5.5zM2 .5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 .5zm11.657 10.657a.5.5 0 0 1 0 .707l-1.06 1.06a.5.5 0 1 1-.707-.707l1.06-1.06a.5.5 0 0 1 .707 0zM3.403 3.403a.5.5 0 0 1 0 .707L2.343 5.17a.5.5 0 1 1-.707-.707l1.06-1.06a.5.5 0 0 1 .707 0zm10.95-1.06a.5.5 0 0 1-.707 0L12.586 2.28a.5.5 0 1 1 .707-.707l1.06 1.06a.5.5 0 0 1 0 .707zM3.403 12.597a.5.5 0 0 1-.707 0L1.636 11.535a.5.5 0 1 1 .707-.707l1.06 1.06a.5.5 0 0 1 0 .707z"/>';
-            } else if (theme === 'focus') {
-                themeIcon.innerHTML = '<path d="M8 3a5 5 0 0 0 0 10 5 5 0 0 0 0-10z"/>';
-            } else {
-                themeIcon.innerHTML = '';
-            }
-        }
-    })();
-</script>
-
-</body>
-</html>
