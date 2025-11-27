@@ -420,7 +420,6 @@ question|option1,option2,option3,option4|correct_option
 - Do not number the questions or add any extra text or explanation.
 - Only output the 5 lines, one for each question, in the format above.
 """
-
             GEMINI_API_URL = (
                 f"https://generativelanguage.googleapis.com/v1beta/models/"
                 f"gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
@@ -773,12 +772,6 @@ def study_topic_view(request, topic_id):
             }]
 
     # Convert descriptions to HTML using markdown
-    for res in resources:
-        try:
-            res["description"] = markdown.markdown(res.get("description", ""))
-        except Exception as e:
-            logger.warning(f"Markdown conversion failed: {e}")
-            res["description"] = "<p><em>Failed to load content.</em></p>"
     for res in resources:
         try:
             res["description"] = markdown.markdown(res.get("description", ""))
