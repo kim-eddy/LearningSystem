@@ -1,3 +1,4 @@
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Course, Topic, Assessment, Materials, Student_Profile, Student_Progress, AI_Assessment, LearningPath, Grade, School
@@ -55,7 +56,6 @@ logger = logging.getLogger(__name__)
 user = None  # Placeholder for user object, to be used in views where needed
 
 
-# Configure Gemini using key from settings (loaded via decouple in settings.py)
 genai.configure(api_key=settings.GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
@@ -252,13 +252,11 @@ def course_detail(request, course_id):
     topics = Topic.objects.filter(course=course)
     materials = Materials.objects.filter(course=course)
     assessments = Assessment.objects.filter(course=course)
-    student_profile = Student_Profile.objects.get(user=request.user)
     return render(request, 'course_detail.html', {
         'course': course,
         'topics': topics,
         'materials': materials,
-        'assessments': assessments,
-        'student_profile': student_profile,
+        'assessments': assessments
     })
 
 
@@ -424,7 +422,6 @@ def assessment_detail(request, assessment_id=None):
             What is 2+2?|3,4,5,6|4
             ...
             """
-            try:
                 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
                 payload = {
                     "contents": [{"parts": [{"text": prompt}]}]
@@ -716,13 +713,6 @@ def learning_resources(request):
     selected_course = request.GET.get('course')  # match the template
     selected_topic = request.GET.get('topic')    # needed for filtering
 
-    # Determine user's preferred language
-    try:
-        profile = Student_Profile.objects.get(user=user)
-        user_language = profile.preferred_language
-    except Student_Profile.DoesNotExist:
-        user_language = 'en'
-
     # Connect to MongoDB
     client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
     db = client["LearningSystem"]
@@ -731,7 +721,7 @@ def learning_resources(request):
     # Get all resources for the logged-in user
     resources = list(collection.find({"user_id": int(user.id)}))
 
-    # Group resources by course  topic
+    # Group resources by course → topic
     grouped_resources = {}
     for res in resources:
         course = res.get("course", "Unknown Course")
@@ -747,20 +737,12 @@ def learning_resources(request):
     return render(request, 'learning_resources.html', {
         "grouped_resources": grouped_resources,
         "selected_course": selected_course,     # pass to template
-        "selected_topic": selected_topic,       # pass to template
-        "user_language": user_language,
+        "selected_topic": selected_topic        # pass to template
     })
 
 def study_topic_view(request, topic_id):
     user = request.user
     topic = get_object_or_404(Topic, id=topic_id)
-
-    # Determine user's preferred language
-    try:
-        profile = Student_Profile.objects.get(user=user)
-        user_language = profile.preferred_language
-    except Student_Profile.DoesNotExist:
-        user_language = 'en'
 
     # MongoDB connection
     client = MongoClient("mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079")
@@ -803,8 +785,7 @@ def study_topic_view(request, topic_id):
             res["description"] = "<p><em>Failed to load content.</em></p>"
     return render(request, "study_topic.html", {
         "topic": topic,
-        "resources": resources,
-        "user_language": user_language,
+        "resources": resources
     })
 
 @require_POST
@@ -932,4 +913,5 @@ def complete_topic(request, topic_id):
 def leaderboard_view(request):
     from .models import Leaderboard
     leaderboard = Leaderboard.objects.order_by('-score')[:10]  # Top 10 users
+
     return render(request, 'leaderboard.html', {'leaderboard': leaderboard})

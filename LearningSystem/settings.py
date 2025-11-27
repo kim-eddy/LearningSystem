@@ -36,7 +36,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['learningsystem-2i38.onrender.com', 'localhost', '127.0.0.1']
 
-
+ASGI_APPLICATION = "LearningSystem.asgi.application"
 # Application definition
 
 INSTALLED_APPS = [
@@ -143,3 +143,4 @@ LOGIN_URL = '/accounts/login/'
 CELERY_BROKER_URL = 'redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@mainline.proxy.rlwy.net:11017'
 CELERY_RESULT_BACKEND = 'redis://default:LKIQbWKQHXlHIcrNAXAhJBGPGjSCuXAf@mainline.proxy.rlwy.net:11017'
 MONGO_URI = 'mongodb://mongo:OGjVByzPvFOpBaoejJuxWhZZnEwpUfxc@shortline.proxy.rlwy.net:57079'
+
